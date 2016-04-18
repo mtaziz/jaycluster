@@ -5,11 +5,7 @@ from scrapy.spiders import Spider
 from scutils.stats_collector import StatsCollector
 import socket
 import time
-<<<<<<< HEAD
 
-=======
-from crawling.job_status_monitor import JobStatusMonitor
->>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 
 class RedisSpider(Spider):
     '''
@@ -48,10 +44,6 @@ class RedisSpider(Spider):
         @param redis_conn: the redis connection from the scheduler
         '''
         self.redis_conn = redis_conn
-<<<<<<< HEAD
-=======
-        self.job_status_monitor = JobStatusMonitor(self)
->>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 
     def setup_stats(self):
         '''

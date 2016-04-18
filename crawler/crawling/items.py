@@ -164,7 +164,6 @@ class DrugstoreItem(RawResponseItem):
     product_details = Field()
     product_id = Field()
     ingredients = Field()
-<<<<<<< HEAD
 
 class MacysItem(RawResponseItem):
 
@@ -179,6 +178,3 @@ class MacysItem(RawResponseItem):
     sku = Field()
     color = Field()
     price = Field()
-
-=======
->>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
