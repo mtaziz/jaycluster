@@ -1,5 +1,4 @@
 from scrapy.downloadermiddlewares.stats import DownloaderStats
-from scrapy.utils.request import request_httprepr
 from scrapy.utils.response import response_httprepr
 from scrapy.utils.response import response_status_message
 

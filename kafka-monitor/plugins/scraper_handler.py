@@ -38,10 +38,6 @@ class ScraperHandler(BaseHandler):
             sid=dict['spiderid'],
             dom=ex_res.domain,
             suf=ex_res.suffix)
-<<<<<<< HEAD
-=======
-
->>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
         val = pickle.dumps(dict, protocol=-1)
 
         # shortcut to shove stuff into the priority queue

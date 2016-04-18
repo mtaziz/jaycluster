@@ -1,6 +1,9 @@
 # -*- coding:utf-8 -*-
-from scrapy.downloadermiddlewares.stats import RedirectMiddleware
+import logging
+from scrapy.downloadermiddlewares.redirect import RedirectMiddleware
 from scrapy.utils.response import response_status_message
+from scrapy.exceptions import IgnoreRequest
+logger = logging.getLogger(__name__)
 
 class CustomRedirectMiddleware(RedirectMiddleware):
     def __init__(self, crawler):

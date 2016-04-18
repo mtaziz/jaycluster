@@ -22,7 +22,6 @@ from scutils.redis_queue import RedisPriorityQueue
 from scutils.redis_throttled_queue import RedisThrottledQueue
 from scutils.log_factory import LogFactory
 from crawling.utils import get_method
-from crawling.job_status_monitor import JobStatusMonitor
 
 try:
     import cPickle as pickle
@@ -79,11 +78,7 @@ class DistributedScheduler(object):
         self.ip_update_interval = ip_refresh
         self.add_type = add_type
         self.add_ip = add_ip
-<<<<<<< HEAD
         self.item_retries = retries
-=======
-        self.item_retires = retries
->>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
         self.logger = logger
         self.ip_regex = re.compile(ip_regex)
 
@@ -91,10 +86,6 @@ class DistributedScheduler(object):
         self.extract = tldextract.TLDExtract()
 
         self.update_ipaddress()
-<<<<<<< HEAD
-        self.job_status_monitor = None
-=======
->>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 
         # if we need better uuid's mod this line
         self.my_uuid = str(uuid.uuid4()).split('-')[4]
@@ -339,11 +330,6 @@ class DistributedScheduler(object):
         self.spider = spider
         self.spider.set_logger(self.logger)
         self.spider.set_redis(self.redis_conn)
-<<<<<<< HEAD
-        # add by msc
-        self.job_status_monitor = JobStatusMonitor(spider)
-=======
->>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
         self.spider.setup_stats()
         self.create_queues()
         self.setup_zookeeper()
@@ -408,11 +394,6 @@ class DistributedScheduler(object):
                 self.logger.debug("Crawlid: '{id}' Appid: '{appid}' added to queue"
                     .format(appid=req_dict['meta']['appid'],
                             id=req_dict['meta']['crawlid']))
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
             else:
                 self.logger.debug("Crawlid: '{id}' Appid: '{appid}' expired"
                                   .format(appid=req_dict['meta']['appid'],
@@ -540,10 +521,6 @@ class DistributedScheduler(object):
                     req.cookies = item['cookie']
                 elif isinstance(item['cookie'], basestring):
                     req.cookies = self.parse_cookie(item['cookie'])
-<<<<<<< HEAD
-=======
-
->>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
             return req
 
         return None
