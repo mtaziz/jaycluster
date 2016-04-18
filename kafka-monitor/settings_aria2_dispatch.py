@@ -2,6 +2,15 @@
  
 
 #KAFKA_HOSTS = '192.168.200.208'
+<<<<<<< HEAD
+KAFKA_HOSTS = '192.168.200.58'
+KAFKA_TOPIC_PREFIX = 'jay'
+
+
+ARIA2_ADDRESSES = ['192.168.200.58:6900']
+
+IMAGES_STORE = '/mnt/nas/pi/images_store'
+=======
 KAFKA_HOSTS = '192.168.200.90'
 KAFKA_TOPIC_PREFIX = 'jay'
 
@@ -9,3 +18,4 @@ KAFKA_TOPIC_PREFIX = 'jay'
 ARIA2_ADDRESSES = ['192.168.103.160:6900','192.168.104.160:6900']
 
 IMAGES_STORE = '/mnt/nas/pi/images_store'
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825

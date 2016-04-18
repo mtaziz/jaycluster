@@ -1,4 +1,8 @@
 from scrapy.downloadermiddlewares.retry import RetryMiddleware
+<<<<<<< HEAD
+from scrapy.exceptions import IgnoreRequest
+=======
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 
 
 class RedisRetryMiddleware(RetryMiddleware):
@@ -16,3 +20,9 @@ class RedisRetryMiddleware(RetryMiddleware):
             retryreq.meta['priority'] = retryreq.meta['priority'] - 10
 
             return retryreq
+<<<<<<< HEAD
+        else:
+            spider.crawler.stats.set_failed_download_value(request.meta, "%s_%s"%(reason, "retry___"))
+            raise IgnoreRequest("max retry times")
+=======
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825

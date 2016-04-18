@@ -164,3 +164,21 @@ class DrugstoreItem(RawResponseItem):
     product_details = Field()
     product_id = Field()
     ingredients = Field()
+<<<<<<< HEAD
+
+class MacysItem(RawResponseItem):
+
+    title = Field()               # 标题
+    description = Field()         # 详细描述
+    productId = Field()           # productId
+    productTypeName = Field()     # productTypeName
+
+    ts = Field()                  # Timestamp
+    size = Field()
+    image_urls = Field()
+    sku = Field()
+    color = Field()
+    price = Field()
+
+=======
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825

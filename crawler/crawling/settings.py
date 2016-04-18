@@ -6,11 +6,19 @@
 import pkgutil
 
 # Specify the host and port to use when connecting to Redis.
+<<<<<<< HEAD
+REDIS_HOST = '192.168.200.58'
+REDIS_PORT = '6379'
+
+# Kafka server information
+KAFKA_HOSTS = '192.168.200.58:9092'
+=======
 REDIS_HOST = '192.168.200.90'
 REDIS_PORT = '6379'
 
 # Kafka server information
 KAFKA_HOSTS = '192.168.200.90:9092'
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 KAFKA_TOPIC_PREFIX = 'jay'
 KAFKA_APPID_TOPICS = False
 # base64 encode the html body to avoid json dump errors due to malformed text
@@ -18,7 +26,11 @@ KAFKA_BASE_64_ENCODE = False
 
 ZOOKEEPER_ASSIGN_PATH = '/scrapy-cluster/crawler/'
 ZOOKEEPER_ID = 'all'
+<<<<<<< HEAD
+ZOOKEEPER_HOSTS = '192.168.200.58:2181'
+=======
 ZOOKEEPER_HOSTS = '192.168.200.90:2181'
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 
 PUBLIC_IP_URL = 'http://ip.42.pl/raw'
 IP_ADDR_REGEX = '(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
@@ -30,7 +42,11 @@ SCHEDULER_PERSIST = True
 SCHEDULER_QUEUE_REFRESH = 10
 
 # throttled queue defaults per domain, x hits in a y second window
+<<<<<<< HEAD
+QUEUE_HITS = 100
+=======
 QUEUE_HITS = 10
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 QUEUE_WINDOW = 60
 
 # we want the queue to produce a consistent pop flow
@@ -43,7 +59,11 @@ DUPEFILTER_TIMEOUT = 600
 SCHEDULER_IP_REFRESH = 60
 
 
+<<<<<<< HEAD
+#USER_AGENT_LIST = pkgutil.get_data('crawling', 'user_agents.list')
+=======
 USER_AGENT_LIST = pkgutil.get_data('crawling', 'user_agents.list')
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 
 '''
 ----------------------------------------
@@ -67,10 +87,17 @@ Type and IP - every spider's throttle queue is determined by the spider type AND
     ip address, allowing the most fined grained control over the throttling mechanism
 '''
 # add Spider type to throttle mechanism
+<<<<<<< HEAD
+SCHEDULER_TYPE_ENABLED = True
+
+# add ip address to throttle mechanism
+SCHEDULER_IP_ENABLED = True
+=======
 SCHEDULER_TYPE_ENABLED = False
 
 # add ip address to throttle mechanism
 SCHEDULER_IP_ENABLED = False
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 '''
 ----------------------------------------
 '''
@@ -85,7 +112,11 @@ SC_LOG_FILE = 'sc_crawler.log'
 SC_LOG_MAX_BYTES = '10MB'
 SC_LOG_BACKUPS = 5
 SC_LOG_STDOUT = False
+<<<<<<< HEAD
+SC_LOG_JSON = False
+=======
 SC_LOG_JSON = True
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 SC_LOG_LEVEL = 'DEBUG'
 
 
@@ -122,6 +153,10 @@ NEWSPIDER_MODULE = 'crawling.spiders'
 # Enables scheduling storing requests queue in redis.
 SCHEDULER = "crawling.distributed_scheduler.DistributedScheduler"
 
+<<<<<<< HEAD
+STATS_CLASS = 'crawling.my_stats_collectors.MyStatsCollector'
+=======
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 
 
 # Store scraped item in redis for post-processing.
@@ -153,6 +188,11 @@ DOWNLOADER_MIDDLEWARES = {
     # 'scrapy.contrib.downloadermiddleware.cookies.CookiesMiddleware': None,
     'scrapy.downloadermiddlewares.cookies.CookiesMiddleware': None,
     'crawling.custom_cookies.CustomCookiesMiddleware': 700,
+<<<<<<< HEAD
+    'scrapy.downloadermiddlewares.stats.DownloaderStats': None,
+    'crawling.download_stats.CostomDownloaderStats': 850,
+=======
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 }
 
 # Disable the built in logging in production
@@ -163,20 +203,32 @@ HTTPERROR_ALLOW_ALL = True
 
 RETRY_TIMES = 3
 
+<<<<<<< HEAD
+DOWNLOAD_TIMEOUT = 30
+=======
 DOWNLOAD_TIMEOUT = 10
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 
 # Avoid in-memory DNS cache. See Advanced topics of docs for info
 DNSCACHE_ENABLED = True
 
 
 
+<<<<<<< HEAD
+MONGODB_SERVER = '192.168.200.58'
+=======
 MONGODB_SERVER = '192.168.200.90'
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 MONGODB_PORT = 27017
 MONGODB_DB = 'products'
 
 ################# Aria2 ###################
 IMAGES_STORE = '/mnt/nas/pi/images_store'
+<<<<<<< HEAD
+ARIA2_ADDRESSES = ['192.168.200.58:6900']
+=======
 ARIA2_ADDRESSES = ['192.168.200.90:6900']
+>>>>>>> 2b6efcc4b238665fcb7cf1940aeee3138361a825
 
 
 # Local Overrides
