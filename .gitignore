@@ -19,6 +19,7 @@ target/**
 dist/**
 etc/amazon.start.urls
 local_settings.py
+localsettings.py
 .idea/**
 
 # Byte-compiled / optimized / DLL files
