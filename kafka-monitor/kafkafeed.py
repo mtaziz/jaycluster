@@ -66,7 +66,11 @@ def main():
                 )
                 feed('settings_crawling.py', json_req)
 
-            redis_conn.hset("crawlid:%s" % crawlid, "total_pages", lines_count)
+            redis_conn.hmset("crawlid:%s" % crawlid, {
+                                     "total_pages":lines_count,
+                                     "type":"update"
+
+                                  })
 
 
     else:
@@ -82,7 +86,13 @@ def main():
             )
 
             feed('settings_crawling.py', json_req)
-            redis_conn.hset("crawlid:%s" % crawlid, "total_pages", len(url_list))
+            redis_conn.hmset("crawlid:%s" % crawlid,
+                                 {
+                                     "total_pages":len(url_list),
+                                     "type":"get"
+
+                                  }
+                             )
 
     return 0
 
