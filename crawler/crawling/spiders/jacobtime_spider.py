@@ -15,8 +15,6 @@ class JacobtimeSpider(JayClusterSpider):
         super(JacobtimeSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response):
-        self.crawler.stats.set_init_value(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
-
         self.log('JacobtimeSpider#parse.........')
         item_urls = [
             urljoin(response.url, x) for x in list(set(

@@ -45,8 +45,6 @@ class EastbaySpider(JayClusterSpider):
 
     def parse(self, response):
         #total_pages=None the porpose is not to init total_page add my msc
-        self.crawler.stats.set_init_value(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], total_pages=None)
-
         self.log("EastbaySpider#parse ...")
         item_urls = [
             urljoin(response.url, x) for x in list(set(

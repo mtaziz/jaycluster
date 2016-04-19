@@ -2,26 +2,22 @@
 
 from redis import Redis
 
+def format(d):
+    for k, v in d.items():
+        print("%s -->  %s"%(k, v))
+
 def main(crawlid, host="192.168.200.90"):
     redis_conn = Redis(host)
     key = "crawlid:%s"%crawlid
-    type = redis_conn.hget(key, "type")
-    if type == "update":
-        total_pages = redis_conn.hget(key, "total_pages")
-        crawled_pages = redis_conn.hget(key, "crawled_pages")
-        print(redis_conn.hgetall(key))
-        if total_pages == crawled_pages:
-            print("finish")
-            return
-    if type == "get":
-        total_pages = redis_conn.hget(key, "total_pages")
-        crawled_pages = redis_conn.hget(key, "crawled_pages")
-        print(redis_conn.hgetall(key))
-        if int(total_pages) == int(crawled_pages)+1:
-            print("finish")
-            return
+    total_pages = int(redis_conn.hget(key, "total_pages") or 0)
+    crawled_pages = int(redis_conn.hget(key, "crawled_pages") or 0)
+    failed_pages = int(redis_conn.hget(key, "failed_download_pages") or 0)
+    drop_pages = int(redis_conn.hget(key, "drop_pages") or 0)
+    print(format(redis_conn.hgetall(key)))
+    if total_pages == crawled_pages+failed_pages+drop_pages and total_pages != 0 :
+        print("finish")
     else:
-        print("haven't started")
+        print("haven't finished")
 
 if __name__ == "__main__":
     import sys

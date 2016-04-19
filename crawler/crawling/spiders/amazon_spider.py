@@ -71,8 +71,6 @@ class AmazonSpider(JayClusterSpider):
         super(AmazonSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response):
-        self.crawler.stats.set_init_value(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
-
         item_urls = [
             urljoin(response.url, x) for x in list(set(
                 response.xpath('//div[@id="resultsCol"]//div[@class="a-row a-spacing-none"]/a[@class="a-link-normal a-text-normal"]/@href').extract()
@@ -84,6 +82,9 @@ class AmazonSpider(JayClusterSpider):
             self.log("BANNED by amazon.com: %s" % response.request)
             print("BANNED by amazon.com: %s" % response.request)
             if response.meta.setdefault('workers',{}).setdefault(self.worker_id, 0) >= 3:
+                self.crawler.stats.inc_total_pages(crawlid=response.meta['crawlid'],
+                                                   spiderid=response.meta['spiderid'],
+                                                   appid=response.meta['appid'])
                 self.crawler.stats.inc_drop_pages(
                     crawlid=response.meta['crawlid'],
                     spiderid=response.meta['spiderid'],
@@ -95,6 +96,7 @@ class AmazonSpider(JayClusterSpider):
                 print("drop response.request: %s" % response.request)
                 return
             else:
+
                 response.meta.get('workers')[self.worker_id] += 1
                 self.crawler.stats.inc_banned_pages(
                     crawlid=response.meta['crawlid'],

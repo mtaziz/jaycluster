@@ -16,7 +16,6 @@ class FinishlineSpider(JayClusterSpider):
         super(FinishlineSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response):
-        self.crawler.stats.set_init_value(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
         print("FinishlineSpider#parse ...")
         self._logger.debug("FinishlineSpider#parse ...")
         item_urls = [

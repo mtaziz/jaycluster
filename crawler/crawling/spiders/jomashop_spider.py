@@ -18,8 +18,6 @@ class JomashopSpider(JayClusterSpider):
         super(JomashopSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response):
-        self.crawler.stats.set_init_value(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
-
          # 保存start_url初始值
         if len(JomashopSpider.start_url) == 0:
             JomashopSpider.start_url = response.url

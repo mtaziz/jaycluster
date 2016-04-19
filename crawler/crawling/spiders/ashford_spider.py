@@ -16,8 +16,6 @@ class AshfordSpider(JayClusterSpider):
         super(AshfordSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response):
-        self.crawler.stats.set_init_value(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
-
         item_urls = [
             urljoin(response.url, x) for x in list(set(
                 response.xpath('//div[@id="grid-4-col"]/div/div[2]/div/div/div/a[1]/@href').extract()

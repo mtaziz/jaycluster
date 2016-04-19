@@ -16,8 +16,6 @@ class DrugstoreSpider(JayClusterSpider):
         super(DrugstoreSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response):
-        self.crawler.stats.set_init_value(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
-
         print("DrugstoreSpider#parse ...")
         self._logger.debug("DrugstoreSpider#parse ...")
         item_urls = [
