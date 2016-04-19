@@ -53,13 +53,12 @@ class MacysSpider(JayClusterSpider):
         parts = urlparse(response.url)
         url = "%s://%s/"%(parts.scheme, parts.netloc)
 
-        print(">>>>>>>>>>>>>>this is response.url:%s"%url)
         item_urls = [
             urljoin(url, x) for x in list(set(
                 response.xpath('//a[@class="productThumbnailLink"]/@href').extract()
             ))
         ]
-
+        self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
         for item_url in item_urls:
             # model = get_model_from_url(item_url)
             # if model not in MacysSpider.have_seen_models:

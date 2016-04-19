@@ -24,7 +24,7 @@ class FinishlineSpider(JayClusterSpider):
                 response.xpath('//div[@class="product-container"]/a/@href').extract()
             ))
         ]
-
+        self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
         for item_url in item_urls:
             yield Request(url=item_url,
                           callback=self.parse_item,

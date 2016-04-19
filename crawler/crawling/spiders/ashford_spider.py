@@ -23,7 +23,7 @@ class AshfordSpider(JayClusterSpider):
                 response.xpath('//div[@id="grid-4-col"]/div/div[2]/div/div/div/a[1]/@href').extract()
             ))
         ]
-
+        self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
         for item_url in item_urls:
             yield Request(url=item_url,
                           callback=self.parse_item,

@@ -78,7 +78,33 @@ class AmazonSpider(JayClusterSpider):
                 response.xpath('//div[@id="resultsCol"]//div[@class="a-row a-spacing-none"]/a[@class="a-link-normal a-text-normal"]/@href').extract()
             ))
         ]
-
+        sel = Selector(response)
+        robot_checks = sel.xpath('//title[@dir="ltr"]/text()').extract()
+        if len(robot_checks) > 0:
+            self.log("BANNED by amazon.com: %s" % response.request)
+            print("BANNED by amazon.com: %s" % response.request)
+            if response.meta.setdefault('workers',{}).setdefault(self.worker_id, 0) >= 3:
+                self.crawler.stats.inc_drop_pages(
+                    crawlid=response.meta['crawlid'],
+                    spiderid=response.meta['spiderid'],
+                    appid=response.meta['appid'],
+                    url=response.request.url,
+                    worker_id=self.worker_id
+                )
+                self.log("drop response.request: %s" % response.request)
+                print("drop response.request: %s" % response.request)
+                return
+            else:
+                response.meta.get('workers')[self.worker_id] += 1
+                self.crawler.stats.inc_banned_pages(
+                    crawlid=response.meta['crawlid'],
+                    spiderid=response.meta['spiderid'],
+                    appid=response.meta['appid'],
+                )
+                self.log("re-yield response.request: %s" % response.request)
+                print("re-yield response.request: %s" % response.request)
+                yield response.request
+        self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
         for item_url in item_urls:
             yield Request(url=item_url,
                           callback=self.parse_item,
@@ -148,7 +174,9 @@ class AmazonSpider(JayClusterSpider):
                 self.crawler.stats.inc_drop_pages(
                     crawlid=response.meta['crawlid'],
                     spiderid=response.meta['spiderid'],
-                    appid=response.meta['appid']
+                    appid=response.meta['appid'],
+                    url=response.request.url,
+                    worker_id=self.worker_id
                 )
                 self.log("drop response.request: %s" % response.request)
                 print("drop response.request: %s" % response.request)
@@ -157,7 +185,7 @@ class AmazonSpider(JayClusterSpider):
                 self.crawler.stats.inc_banned_pages(
                     crawlid=response.meta['crawlid'],
                     spiderid=response.meta['spiderid'],
-                    appid=response.meta['appid']
+                    appid=response.meta['appid'],
                 )
                 self.log("re-yield response.request: %s" % response.request)
                 print("re-yield response.request: %s" % response.request)

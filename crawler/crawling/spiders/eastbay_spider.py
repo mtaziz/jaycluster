@@ -58,6 +58,7 @@ class EastbaySpider(JayClusterSpider):
             model = get_model_from_url(item_url)
 
             if model not in EastbaySpider.have_seen_models:
+                self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
                 EastbaySpider.have_seen_models.add(model)
                 yield Request(url=item_url,
                               callback=self.parse_item,
@@ -118,9 +119,7 @@ class EastbaySpider(JayClusterSpider):
         item['NBR'] = ''.join(sel.re(r'var model_nbr = (.*);')).strip()
         item['model'] = json.loads(''.join(sel.re(r'var model = (.*);')).strip().replace('&nbsp;', ''))
         item['styles'] = json.loads(''.join(sel.re(r'var styles = (.*);')).strip().replace('&nbsp;', ''))
-        for i in range(0, len(item['styles'])-1):
-            self.job_status_monitor.inc_crawled_pages(
-        		crawlid=response.meta['crawlid'],
-        		spiderid=response.meta['spiderid'],
-        		appid=response.meta['appid']
-        	)
+        self.crawler.stats.inc_crawled_pages(
+            crawlid=response.meta['crawlid'],
+            spiderid=response.meta['spiderid'],
+            appid=response.meta['appid'])

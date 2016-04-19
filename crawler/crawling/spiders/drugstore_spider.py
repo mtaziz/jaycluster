@@ -25,7 +25,7 @@ class DrugstoreSpider(JayClusterSpider):
                 response.xpath('//div[contains(@id,"gridView")]/div[2]/span/a[@class="oesLink"]/@href').extract()
             ))
         ]
-
+        self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
         for item_url in item_urls:
             yield Request(url=item_url,
                           callback=self.parse_item,
