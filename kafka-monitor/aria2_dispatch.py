@@ -48,11 +48,9 @@ class Aria2Dispatcher:
                 	'rpc_uri': rpc_uri,
                 	'ws': aria2_connection
             	})
-                print(">>>>>>>>>>>>>>>>>>>>>>>>>>")
             except:
             	logger.error('create aria2_connection error!')
                 raise
-                print("11111111111111111111111111111111111")
 
 
     def _process_item(self, item, aria2_client_index):
