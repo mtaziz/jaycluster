@@ -19,12 +19,12 @@ def _get_ip_address(ifname):
 def get_raspberrypi_ip_address():
 
     try:
-        r = _get_ip_address('ens32')
+        r = _get_ip_address('eth0')
     except:
         try:
             r = _get_ip_address('enp1s0')
         except:
-            r = _get_ip_address('enp0s25')
+            r = _get_ip_address('ens32')
 
 
     return r
