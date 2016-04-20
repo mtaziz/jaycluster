@@ -5,10 +5,10 @@ from redis import Redis
 def format(d, f=False):
     for k, v in d.items():
         if f:
-            print("reason:%s"%v.center(20))
-            print("url:%s"%k.center(20))
+            print("reason:%s"%v.center(30))
+            print("url:%s"%k.center(30))
         else:
-            print("%s -->  %s"%(k.center(20), v))
+            print("%s -->  %s"%(k.center(30), v))
 
 def main(crawlid, host="192.168.200.90"):
     redis_conn = Redis(host)
@@ -26,7 +26,7 @@ def main(crawlid, host="192.168.200.90"):
             key = "failed_pages:%s"%crawlid
             p = redis_conn.hgetall(key)
             format(p, True)
-    if total_pages == crawled_pages+failed_pages+drop_pages and total_pages != 0 :
+    if total_pages <= crawled_pages+failed_pages+drop_pages and total_pages != 0 :
         print("finish")
     else:
         import datetime

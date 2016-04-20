@@ -5,7 +5,7 @@ from scrapy.http import Request
 from urlparse import urljoin
 from jay_cluster_spider import JayClusterSpider
 from crawling.items import EastbayItem
-from crawling.utils import format_html_string
+from crawling.utils import format_html_string, method_wrapper
 import json
 from itertools import chain
 import re
@@ -72,7 +72,7 @@ class EastbaySpider(JayClusterSpider):
             yield Request(url=next_page_url,
                           callback=self.parse,
                           meta=response.meta)
-
+    @method_wrapper
     def parse_item(self, response):
         sel = Selector(response)
         item = EastbayItem()
@@ -104,6 +104,7 @@ class EastbaySpider(JayClusterSpider):
 
         return item
 
+    @method_wrapper
     def parse_item_update(self, response):
         item = EastbayItem()
         self._enrich_base_data(item, response, is_update=True)
