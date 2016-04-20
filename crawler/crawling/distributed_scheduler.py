@@ -442,8 +442,8 @@ class DistributedScheduler(object):
                 #self.spider.log('len(self.queue_dict[key]): %s '% len(self.queue_dict[key]))
                 self.logger.info('len(self.queue_dict[key]): %s ' % len(self.queue_dict[key]))
 
-                #print('key: %s ' % key)
-                #print('len(self.queue_dict[key]): %s '% len(self.queue_dict[key]))
+                print('key: %s ' % key)
+                print('len(self.queue_dict[key]): %s '% len(self.queue_dict[key]))
 
                 if item:
                     return item
@@ -479,7 +479,7 @@ class DistributedScheduler(object):
         #     self.report_self()
         #     print('after   self.report_self()')
         item = self.find_item()
-        #print('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
+        print('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
         #self.spider.log('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
         self.logger.info('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
 

@@ -19,13 +19,24 @@ def main(crawlid, host="192.168.200.90"):
     drop_pages = int(redis_conn.hget(key, "drop_pages") or 0)
     format(redis_conn.hgetall(key))
     if drop_pages or failed_pages:
-        key = "failed_pages:%s"%crawlid
-        p = redis_conn.hgetall(key)
-        format(p, True)
+        print_if = raw_input("wheather print the failed pages or not y/n:")
+        if print_if == "n":
+            pass
+        else:
+            key = "failed_pages:%s"%crawlid
+            p = redis_conn.hgetall(key)
+            format(p, True)
     if total_pages == crawled_pages+failed_pages+drop_pages and total_pages != 0 :
         print("finish")
     else:
-        print("haven't finished")
+        import datetime
+        now = datetime.datetime.now()
+        u_t = redis_conn.hget(key, "update_time")
+        update_time = datetime.datetime.strptime(u_t, "%Y-%m-%d %H:%M:%S") if u_t else now
+        if (now-update_time).seconds < 600:
+            print("haven't finished")
+        else:
+            print("finish")
 
 if __name__ == "__main__":
     import sys
