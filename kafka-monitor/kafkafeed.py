@@ -4,7 +4,7 @@ import time
 import redis
 import sys
 from kafka_monitor_sdk import feed
-from settings import REDIS_HOST, REDIS_PORT
+from localsettings import REDIS_HOST, REDIS_PORT
 
 
 def build_url(line, spiderid):
