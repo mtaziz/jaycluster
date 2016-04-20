@@ -95,7 +95,7 @@ class AmazonSpider(JayClusterSpider):
         sel = Selector(response)
         robot_checks = sel.xpath('//title[@dir="ltr"]/text()').extract()
         if len(robot_checks) > 0:
-            self.log("BANNED by amazon.com: %s" % response.request)
+            self.logger.info("BANNED by amazon.com: %s" % response.request)
             print("BANNED by amazon.com: %s" % response.request)
             if response.meta.setdefault('workers',{}).setdefault(self.worker_id, 0) >= 3:
                 self.crawler.stats.inc_total_pages(crawlid=response.meta['crawlid'],
@@ -108,7 +108,7 @@ class AmazonSpider(JayClusterSpider):
                     url=response.request.url,
                     worker_id=self.worker_id
                 )
-                self.log("drop response.request: %s" % response.request)
+                self.logger.info("drop response.request: %s" % response.request)
                 print("drop response.request: %s" % response.request)
                 return
             else:
@@ -119,7 +119,7 @@ class AmazonSpider(JayClusterSpider):
                     spiderid=response.meta['spiderid'],
                     appid=response.meta['appid'],
                 )
-                self.log("re-yield response.request: %s" % response.request)
+                self.logger.info("re-yield response.request: %s" % response.request)
                 print("re-yield response.request: %s" % response.request)
                 yield response.request
         self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
