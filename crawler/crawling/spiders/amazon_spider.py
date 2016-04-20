@@ -300,11 +300,11 @@ class AmazonSpider(JayClusterSpider):
         shipping_cost_string = ''.join(response.xpath('//*[@id="olpTabContent"]//p[@class="olpShippingInfo"]//span[@class="a-color-secondary"]//text()').extract()).strip()
         item['shipping_cost'] = extract_shipping_cost_price_from_shipping_cost_string(shipping_cost_string)
         self.log("yield item in parse_shipping_cost: %s" % item)
-        self.crawler.stats.inc_crawled_pages(
-                crawlid=response.meta['crawlid'],
-                spiderid=response.meta['spiderid'],
-                appid=response.meta['appid']
-        )
+        # self.crawler.stats.inc_crawled_pages(
+        #         crawlid=response.meta['crawlid'],
+        #         spiderid=response.meta['spiderid'],
+        #         appid=response.meta['appid']
+        # )
         yield item
 
     def errback(self, failure):

@@ -18,5 +18,8 @@ class RedisRetryMiddleware(RetryMiddleware):
 
             return retryreq
         else:
+            spider.crawler.stats.inc_total_pages(crawlid=request.meta['crawlid'],
+                                               spiderid=request.meta['spiderid'],
+                                               appid=request.meta['appid'])
             spider.crawler.stats.set_failed_download_value(request.meta, "%s_%s"%(reason, "retry___"))
             raise IgnoreRequest("max retry times")

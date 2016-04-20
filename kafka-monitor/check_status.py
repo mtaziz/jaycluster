@@ -2,9 +2,13 @@
 
 from redis import Redis
 
-def format(d):
+def format(d, f=False):
     for k, v in d.items():
-        print("%s -->  %s"%(k, v))
+        if f:
+            print("reason:%s"%v.center(20))
+            print("url:%s"%k.center(20))
+        else:
+            print("%s -->  %s"%(k.center(20), v))
 
 def main(crawlid, host="192.168.200.90"):
     redis_conn = Redis(host)
@@ -13,7 +17,11 @@ def main(crawlid, host="192.168.200.90"):
     crawled_pages = int(redis_conn.hget(key, "crawled_pages") or 0)
     failed_pages = int(redis_conn.hget(key, "failed_download_pages") or 0)
     drop_pages = int(redis_conn.hget(key, "drop_pages") or 0)
-    print(format(redis_conn.hgetall(key)))
+    format(redis_conn.hgetall(key))
+    if drop_pages or failed_pages:
+        key = "failed_pages:%s"%crawlid
+        p = redis_conn.hgetall(key)
+        format(p, True)
     if total_pages == crawled_pages+failed_pages+drop_pages and total_pages != 0 :
         print("finish")
     else:
