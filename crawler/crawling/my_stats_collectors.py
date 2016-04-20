@@ -105,7 +105,7 @@ class MyStatsCollector(MemoryStatsCollector):
         self.redis_conn.hincrby("crawlid:%s" % crawlid, "crawled_pages", 1)
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
         self.inc_crawled_pages_one_worker(crawlid=crawlid, workerid=self.crawler.spider.worker_id)
-        self.crawler.spider.log("WORKER_CRAWLED_MESSAGE: {crawlid:%s,workerid:%s, %s }" % (
+        self.crawler.spider.logger.info("WORKER_CRAWLED_MESSAGE: {crawlid:%s,workerid:%s, %s }" % (
             crawlid,
             self.crawler.spider.worker_id,
             self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id)))
@@ -126,7 +126,7 @@ class MyStatsCollector(MemoryStatsCollector):
         self.redis_conn.hincrby("crawlid:%s" % crawlid, "banned_pages", 1)
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
         self.inc_banned_pages_one_worker(crawlid=crawlid, workerid=self.crawler.spider.worker_id)
-        self.crawler.spider.log("WORKER_BANNED_MESSAGE: {crawlid:%s,workerid:%s, %s }" % (
+        self.crawler.spider.logger.info("WORKER_BANNED_MESSAGE: {crawlid:%s,workerid:%s, %s }" % (
             crawlid,
             self.crawler.spider.worker_id,
             self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id)))

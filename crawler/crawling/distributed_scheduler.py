@@ -303,17 +303,17 @@ class DistributedScheduler(object):
 
         my_level = settings.get('SC_LOG_LEVEL', 'DEBUG')
         my_name = settings.get('SC_LOGGER_NAME', 'sc-logger')
-        my_output = False  # settings.get('SC_LOG_STDOUT', False)
-        my_json = settings.get('SC_LOG_JSON', False)
+        my_output = settings.get('SC_LOG_STDOUT', False)
+        my_json = settings.get('SC_LOG_JSON', True)
         my_dir = settings.get('SC_LOG_DIR', 'logs')
         my_bytes = settings.get('SC_LOG_MAX_BYTES', '10MB')
-        my_file = 'main.log'
+        my_file = settings.get('SC_LOG_FILE')
         my_backups = settings.get('SC_LOG_BACKUPS', 5)
 
-        logger = LogFactory.get_instance(json=False,
-                                         name='sc-logger',
-                                         stdout=True,
-                                         level='DEBUG',
+        logger = LogFactory.get_instance(json=my_json,
+                                         name=my_name,
+                                         stdout=my_output,
+                                         level=my_level,
                                          dir=my_dir,
                                          file=my_file,
                                          bytes=my_bytes,
@@ -437,11 +437,13 @@ class DistributedScheduler(object):
                 # the throttled queue only returns an item if it is allowed
                 item = self.queue_dict[key].pop()
 
-                self.spider.log('key: %s ' % key)
-                self.spider.log('len(self.queue_dict[key]): %s '% len(self.queue_dict[key]))
+                #self.spider.log('key: %s ' % key)
+                self.logger.info('key: %s ' % key)
+                #self.spider.log('len(self.queue_dict[key]): %s '% len(self.queue_dict[key]))
+                self.logger.info('len(self.queue_dict[key]): %s ' % len(self.queue_dict[key]))
 
-                print('key: %s ' % key)
-                print('len(self.queue_dict[key]): %s '% len(self.queue_dict[key]))
+                #print('key: %s ' % key)
+                #print('len(self.queue_dict[key]): %s '% len(self.queue_dict[key]))
 
                 if item:
                     return item
@@ -477,8 +479,10 @@ class DistributedScheduler(object):
         #     self.report_self()
         #     print('after   self.report_self()')
         item = self.find_item()
-        print('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
-        self.spider.log('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
+        #print('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
+        #self.spider.log('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
+        self.logger.info('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
+
         if item:
             self.logger.debug("Found url to crawl {url}" \
                     .format(url=item['url']))

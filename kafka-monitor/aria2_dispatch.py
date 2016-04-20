@@ -43,13 +43,13 @@ class Aria2Dispatcher:
         for x in self.settings.ARIA2_ADDRESSES:
             rpc_uri = "ws://%s/jsonrpc" % x
             try:
-            	aria2_connection=create_connection(rpc_uri)
-            	self.aria2_clients.append({
+                aria2_connection=create_connection(rpc_uri)
+                self.aria2_clients.append({
                 	'rpc_uri': rpc_uri,
                 	'ws': aria2_connection
             	})
             except:
-            	logger.error('create aria2_connection error!')
+                logger.error('create aria2_connection error!')
                 raise
 
 
@@ -61,19 +61,19 @@ class Aria2Dispatcher:
 
 
         if 'updates' in item['meta']['collection_name']:
-        	message = json.dumps(item)
-        	print("in.....   if 'updates' in item['meta']['collection_name']:")
-        	print('collection_name::',item['meta']['collection_name'])
+            message = json.dumps(item)
+            print("in.....   if 'updates' in item['meta']['collection_name']:")
+            print('collection_name::',item['meta']['collection_name'])
         else:
-        	self._process_item_images(item, aria2_client_index)
-	        try:
-	            if 'images' in item and len(item['images']) > 0:
-	                message = json.dumps(item)
-	            else:
-	                message = 'no images.'
-	        except:
-	            message = 'json failed to parse'
-	            logger.error(message)
+            self._process_item_images(item, aria2_client_index)
+            try:
+                if 'images' in item and len(item['images']) > 0:
+                    message = json.dumps(item)
+                else:
+                    message = 'no images.'
+            except:
+                message = 'json failed to parse'
+                logger.error(message)
 
         self._check_topic(crawled_firehose_images_topic)
         self.producer.send_messages(crawled_firehose_images_topic, message)
