@@ -2,11 +2,11 @@
 # to override please use a custom localsettings.py file
 
 # Redis host information
-REDIS_HOST = '192.168.200.58'
+REDIS_HOST = '192.168.56.6'
 REDIS_PORT = 6379
 
 # Kafka server information
-KAFKA_HOSTS = '192.168.200.58:9092'
+KAFKA_HOSTS = '192.168.56.6:9092'
 
 KAFKA_INCOMING_TOPIC = 'jay.incoming'
 KAFKA_GROUP = 'jay-group'

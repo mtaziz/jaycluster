@@ -22,9 +22,9 @@ def get_raspberrypi_ip_address():
         r = _get_ip_address('ens32')
     except:
         try:
-            r = _get_ip_address('enp1s0')
+            r = _get_ip_address('enp0s3')
         except:
-            r = _get_ip_address('enp0s25')
+            r = _get_ip_address('enp0s8')
 
 
     return r

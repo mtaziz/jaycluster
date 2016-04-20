@@ -6,11 +6,11 @@
 import pkgutil
 
 # Specify the host and port to use when connecting to Redis.
-REDIS_HOST = '192.168.200.58'
+REDIS_HOST = '192.168.56.6'
 REDIS_PORT = '6379'
 
 # Kafka server information
-KAFKA_HOSTS = '192.168.200.58:9092'
+KAFKA_HOSTS = '192.168.56.6:9092'
 KAFKA_TOPIC_PREFIX = 'jay'
 KAFKA_APPID_TOPICS = False
 # base64 encode the html body to avoid json dump errors due to malformed text
@@ -18,7 +18,7 @@ KAFKA_BASE_64_ENCODE = False
 
 ZOOKEEPER_ASSIGN_PATH = '/scrapy-cluster/crawler/'
 ZOOKEEPER_ID = 'all'
-ZOOKEEPER_HOSTS = '192.168.200.58:2181'
+ZOOKEEPER_HOSTS = '192.168.56.6:2181'
 
 PUBLIC_IP_URL = 'http://ip.42.pl/raw'
 IP_ADDR_REGEX = '(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
@@ -85,7 +85,7 @@ SC_LOG_FILE = 'sc_crawler.log'
 SC_LOG_MAX_BYTES = '10MB'
 SC_LOG_BACKUPS = 5
 SC_LOG_STDOUT = False
-SC_LOG_JSON = False
+SC_LOG_JSON = True
 SC_LOG_LEVEL = 'DEBUG'
 
 
@@ -175,13 +175,13 @@ DNSCACHE_ENABLED = True
 
 
 
-MONGODB_SERVER = '192.168.200.58'
+MONGODB_SERVER = '192.168.56.6'
 MONGODB_PORT = 27017
 MONGODB_DB = 'products'
 
 ################# Aria2 ###################
-IMAGES_STORE = '/mnt/nas/pi/images_store'
-ARIA2_ADDRESSES = ['192.168.200.58:6900']
+IMAGES_STORE = '/home/chuande/project/aria2/images'
+ARIA2_ADDRESSES = ['192.168.56.6:6900']
 
 
 # Local Overrides

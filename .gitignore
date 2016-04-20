@@ -83,3 +83,7 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+
+#ignore settings
+settings*.py

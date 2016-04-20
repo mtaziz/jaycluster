@@ -1,9 +1,9 @@
 # Redis host information
-REDIS_HOST = '192.168.200.58'
+REDIS_HOST = '192.168.56.6.58'
 REDIS_PORT = 6379
 
 # Kafka server information
-KAFKA_HOSTS = '192.168.200.58'
+KAFKA_HOSTS = '192.168.56.6.58'
 KAFKA_INCOMING_TOPIC = 'jay.incoming_urls'
 KAFKA_GROUP = 'jay-group'
 
