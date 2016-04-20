@@ -22,6 +22,7 @@ from scutils.redis_queue import RedisPriorityQueue
 from scutils.redis_throttled_queue import RedisThrottledQueue
 from scutils.log_factory import LogFactory
 from crawling.utils import get_method
+from utils import get_raspberrypi_ip_address
 
 try:
     import cPickle as pickle
@@ -254,7 +255,7 @@ class DistributedScheduler(object):
         '''
         # assign local ip in case of exception
         self.old_ip = self.my_ip
-        self.my_ip = '127.0.0.1'
+        self.my_ip = get_raspberrypi_ip_address()
         try:
             obj = urllib2.urlopen(settings.get('PUBLIC_IP_URL',
                                   'http://ip.42.pl/raw'))
