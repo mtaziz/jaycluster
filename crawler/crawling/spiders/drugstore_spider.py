@@ -16,8 +16,6 @@ class DrugstoreSpider(JayClusterSpider):
         super(DrugstoreSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response):
-        self.crawler.stats.set_init_value(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
-
         print("DrugstoreSpider#parse ...")
         self._logger.debug("DrugstoreSpider#parse ...")
         item_urls = [
@@ -25,7 +23,7 @@ class DrugstoreSpider(JayClusterSpider):
                 response.xpath('//div[contains(@id,"gridView")]/div[2]/span/a[@class="oesLink"]/@href').extract()
             ))
         ]
-
+        self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
         for item_url in item_urls:
             yield Request(url=item_url,
                           callback=self.parse_item,

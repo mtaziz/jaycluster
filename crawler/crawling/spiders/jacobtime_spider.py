@@ -15,15 +15,13 @@ class JacobtimeSpider(JayClusterSpider):
         super(JacobtimeSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response):
-        self.crawler.stats.set_init_value(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
-
         self.log('JacobtimeSpider#parse.........')
         item_urls = [
             urljoin(response.url, x) for x in list(set(
                 response.xpath('//*[@id="content"]//div[@class="product-list"]/div/div[@class="link-block"]/a[2]/@href').extract()
             ))
         ]
-
+        self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
         for item_url in item_urls:
             yield Request(url=item_url,
                           callback=self.parse_item,

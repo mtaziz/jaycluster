@@ -50,6 +50,7 @@ class Aria2Dispatcher:
             	})
             except:
                 logger.error('create aria2_connection error!')
+                raise
 
 
     def _process_item(self, item, aria2_client_index):

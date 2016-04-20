@@ -20,14 +20,12 @@ class ZapposSpider(JayClusterSpider):
         super(ZapposSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response):
-        self.crawler.stats.set_init_value(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
-
         item_urls = [
             urljoin(response.url, x) for x in list(set(
                 response.xpath('//*[@id="searchResults"]/a/@href').extract()
             ))
         ]
-
+        self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
         for item_url in item_urls:
             yield Request(url=item_url,
                           callback=self.parse_item,

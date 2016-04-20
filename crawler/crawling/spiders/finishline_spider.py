@@ -16,7 +16,6 @@ class FinishlineSpider(JayClusterSpider):
         super(FinishlineSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response):
-        self.crawler.stats.set_init_value(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
         print("FinishlineSpider#parse ...")
         self._logger.debug("FinishlineSpider#parse ...")
         item_urls = [
@@ -24,7 +23,7 @@ class FinishlineSpider(JayClusterSpider):
                 response.xpath('//div[@class="product-container"]/a/@href').extract()
             ))
         ]
-
+        self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
         for item_url in item_urls:
             yield Request(url=item_url,
                           callback=self.parse_item,

@@ -87,14 +87,14 @@ class MyStatsCollector(MemoryStatsCollector):
             self.redis_conn.hset("crawlid:%s" % crawlid, "total_pages", total_pages)
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
 
-    def inc_total_pages(self, crawlid, spiderid, appid):
+    def inc_total_pages(self, crawlid, spiderid, appid, num=1):
         """
         auto increace total pages add by msc
         :param crawlid: crawl ID
         :return: None
         """
 
-        self.redis_conn.hincrby("crawlid:%s" % crawlid, "total_pages", 1)
+        self.redis_conn.hincrby("crawlid:%s" % crawlid, "total_pages", num)
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
 
     def set_total_pages(self, crawlid, spiderid, appid, total_pages):
@@ -117,9 +117,10 @@ class MyStatsCollector(MemoryStatsCollector):
         self.redis_conn.hincrby("crawlid:%s" % crawlid, "yield_pages", 1)
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
 
-    def inc_drop_pages(self, crawlid, spiderid, appid):
+    def inc_drop_pages(self, crawlid, spiderid, appid, url=None, worker_id=None):
         self.redis_conn.hincrby("crawlid:%s" % crawlid, "drop_pages", 1)
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
+        self.set_failed_download_page(crawlid, url, "the url banned many times by %s to drop"%worker_id)
 
     def inc_banned_pages(self, crawlid, spiderid, appid):
         self.redis_conn.hincrby("crawlid:%s" % crawlid, "banned_pages", 1)

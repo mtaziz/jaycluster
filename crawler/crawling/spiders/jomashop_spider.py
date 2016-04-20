@@ -18,8 +18,6 @@ class JomashopSpider(JayClusterSpider):
         super(JomashopSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response):
-        self.crawler.stats.set_init_value(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
-
          # 保存start_url初始值
         if len(JomashopSpider.start_url) == 0:
             JomashopSpider.start_url = response.url
@@ -28,6 +26,8 @@ class JomashopSpider(JayClusterSpider):
         product_urls = sel.xpath('//ul[@class="products-grid"]/li//a[@class="product-image"]/@href').extract()
         product_urls = set(product_urls)
         has_more_page = not (len(product_urls) < JomashopSpider.products_count_per_page)
+        self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(product_urls))
+
         for product_url in product_urls:
             yield Request(
                 url=product_url,
