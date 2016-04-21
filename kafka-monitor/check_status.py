@@ -5,10 +5,10 @@ from redis import Redis
 def format(d, f=False):
     for k, v in d.items():
         if f:
-            print("reason:%s"%v.center(30))
-            print("url:%s"%k.center(30))
+            print("reason:%s"%v.ljust(22))
+            print("url:%s"%k.ljust(22))
         else:
-            print("%s -->  %s"%(k.center(30), v))
+            print("%s -->  %s"%(k.ljust(22), v))
 
 def main(crawlid, host="192.168.200.90"):
     redis_conn = Redis(host)
@@ -17,16 +17,25 @@ def main(crawlid, host="192.168.200.90"):
     crawled_pages = int(redis_conn.hget(key, "crawled_pages") or 0)
     failed_pages = int(redis_conn.hget(key, "failed_download_pages") or 0)
     drop_pages = int(redis_conn.hget(key, "drop_pages") or 0)
+    failed_images = int(redis_conn.hget(key, "failed_download_images") or 0)
     format(redis_conn.hgetall(key))
     if drop_pages or failed_pages:
-        print_if = raw_input("wheather print the failed pages or not y/n:")
+        print_if = raw_input("show the failed pages(include failed_download_pages and drop_pages)? y/n:")
         if print_if == "n":
             pass
         else:
             key = "failed_pages:%s"%crawlid
             p = redis_conn.hgetall(key)
             format(p, True)
-    if total_pages <= crawled_pages+failed_pages+drop_pages and total_pages != 0 :
+            if failed_images:
+                print_if = raw_input("show the failed download pages? y/n:")
+                if print_if == "n":
+                    pass
+                else:
+                    key = "failed_images:%s"%crawlid
+                    p = redis_conn.hgetall(key)
+                    format(p, True)
+    if (total_pages <= crawled_pages+failed_pages+drop_pages and total_pages != 0) or (total_pages < crawled_pages+failed_pages+drop_pages and total_pages == 0):
         print("finish")
     else:
         import datetime

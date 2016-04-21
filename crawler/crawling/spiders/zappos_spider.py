@@ -4,7 +4,7 @@ from scrapy.http import Request
 from urlparse import urljoin
 from jay_cluster_spider import JayClusterSpider
 from crawling.items import ZapposItem
-from crawling.utils import format_html_string
+from crawling.utils import format_html_string, parse_method_wrapper
 import json
 from itertools import chain
 import re
@@ -19,6 +19,7 @@ class ZapposSpider(JayClusterSpider):
     def __init__(self, *args, **kwargs):
         super(ZapposSpider, self).__init__(*args, **kwargs)
 
+    @parse_method_wrapper
     def parse(self, response):
         item_urls = [
             urljoin(response.url, x) for x in list(set(
@@ -42,6 +43,7 @@ class ZapposSpider(JayClusterSpider):
                           callback=self.parse,
                           meta=response.meta)
 
+    @parse_method_wrapper
     def parse_item(self, response):
         sel = Selector(response)
         item = ZapposItem()
@@ -49,6 +51,8 @@ class ZapposSpider(JayClusterSpider):
         item['productId'] = ''.join(sel.xpath('//form[@id="prForm"]/input[@name="productId"]/@value').extract()).strip()
 
         if item['productId'] in self.seen_products:
+            self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'],
+                                               response.meta['appid'], -1)
             return
         else:
             self.seen_products.add(item['productId'])
@@ -73,15 +77,10 @@ class ZapposSpider(JayClusterSpider):
             spiderid=response.meta['spiderid'],
             appid=response.meta['appid']
         )
-        print('item====', item)
-        self.crawler.stats.inc_crawled_pages(
-            crawlid=response.meta['crawlid'],
-            spiderid=response.meta['spiderid'],
-            appid=response.meta['appid']
-        )
 
         return item
 
+    @parse_method_wrapper
     def parse_item_update(self, response):
         item = ZapposItem()
         self._enrich_base_data(item, response, is_update=True)
@@ -91,7 +90,6 @@ class ZapposSpider(JayClusterSpider):
             spiderid=response.meta['spiderid'],
             appid=response.meta['appid']
         )
-        print('item====', item)
         return item
 
     def _enrich_same_part(self, item, response):

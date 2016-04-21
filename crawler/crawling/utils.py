@@ -9,7 +9,7 @@ import sys
 import traceback
 from functools import wraps
 
-def method_wrapper(func):
+def parse_method_wrapper(func):
     @wraps(func)
     def wrapper_method(*args, **kwds):
         try:
@@ -22,6 +22,36 @@ def method_wrapper(func):
             self.log(msg)
             self.crawler.stats.set_failed_download_value(response.meta, str(e[1]))
     return wrapper_method
+
+def parse_image_method_wrapper(func):
+    @wraps(func)
+    def wrapper_method(*args, **kwds):
+        try:
+            return func(*args, **kwds)
+        except Exception:
+            e = sys.exc_info()
+            self = args[0]
+            response = args[1]
+            msg = "error heppened in %s method. Error:%s"%(func.__name__, traceback.format_exception(*e))
+            self.log(msg)
+            item = response.meta.get("item-half", {})
+            self.crawler.stats.set_failed_download_images(response.meta, "%s product_Id:%s"%(str(e[1]), item.get('product_id')))
+            return item
+    return wrapper_method
+
+def next_request_method_wrapper(self):
+    def wrapper(func):
+        @wraps(func)
+        def wrapper_method(*args, **kwds):
+            try:
+                return func(*args, **kwds)
+            except Exception:
+                e = sys.exc_info()
+                msg = "error heppened in %s method. Error:%s"%(func.__name__, traceback.format_exception(*e))
+                self.logger.info(msg)
+                self.spider.crawler.stats.set_failed_download_value(self.present_item, str(e[1]))
+        return wrapper_method
+    return wrapper
 
 def pipline_method_wrapper(func):
     @wraps(func)

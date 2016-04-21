@@ -29,9 +29,11 @@ class CustomRedirectMiddleware(RedirectMiddleware):
         else:
             logger.debug("Discarding %(request)s: max redirections reached",
                          {'request': request}, extra={'spider': spider})
-            # self.stats.inc_total_pages(crawlid=request.meta['crawlid'],
-            #                                    spiderid=request.meta['spiderid'],
-            #                                    appid=request.meta['appid'])
+            request.meta["url"] = request.url
+            if request.meta.get("if_next_page"):
+                spider.crawler.stats.inc_total_pages(crawlid=request.meta['crawlid'],
+                                                     spiderid=request.meta['spiderid'],
+                                                     appid=request.meta['appid'])
             self.stats.set_failed_download_value(request.meta, reason)
             raise IgnoreRequest("max redirections reached")
 

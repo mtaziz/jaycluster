@@ -4,7 +4,7 @@ from scrapy.http import Request
 from urlparse import urljoin
 from jay_cluster_spider import JayClusterSpider
 from crawling.items import JacobtimeItem
-from crawling.utils import format_html_string
+from crawling.utils import format_html_string, parse_method_wrapper
 
 
 class JacobtimeSpider(JayClusterSpider):
@@ -14,6 +14,7 @@ class JacobtimeSpider(JayClusterSpider):
     def __init__(self, *args, **kwargs):
         super(JacobtimeSpider, self).__init__(*args, **kwargs)
 
+    @parse_method_wrapper
     def parse(self, response):
         self.log('JacobtimeSpider#parse.........')
         item_urls = [
@@ -40,6 +41,7 @@ class JacobtimeSpider(JayClusterSpider):
                           meta=response.meta,
                           dont_filter=True)
 
+    @parse_method_wrapper
     def parse_item(self, response):
         self.log('JacobtimeSpider#parse_item...')
         item = JacobtimeItem()
@@ -56,6 +58,7 @@ class JacobtimeSpider(JayClusterSpider):
 
         return item
 
+    @parse_method_wrapper
     def parse_item_update(self, response):
         self.log('JacobtimeSpider#parse_item_update...')
         item = JacobtimeItem()

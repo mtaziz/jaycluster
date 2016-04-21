@@ -4,7 +4,7 @@ from scrapy.http import Request
 from urlparse import urljoin
 from jay_cluster_spider import JayClusterSpider
 from crawling.items import AmazonItem
-from crawling.utils import format_html_string, safely_json_loads, re_search, dump_response_body
+from crawling.utils import format_html_string, safely_json_loads, re_search, dump_response_body, parse_method_wrapper
 from itertools import chain
 import re
 import time
@@ -73,6 +73,7 @@ class AmazonSpider(JayClusterSpider):
 
 
 
+    @parse_method_wrapper
     def parse(self, response):
         item_urls = [
             urljoin(response.url, x) for x in list(set(
@@ -85,7 +86,7 @@ class AmazonSpider(JayClusterSpider):
             self._logger.info("BANNED by amazon.com: %s" % response.request)
             print("BANNED by amazon.com: %s" % response.request)
             if response.meta.setdefault('workers',{}).setdefault(self.worker_id, 0) >= 3:
-                if not response.meta.get("if_next_pages"):
+                if not response.meta.get("if_next_page"):
                     self.crawler.stats.inc_total_pages(crawlid=response.meta['crawlid'],
                                                        spiderid=response.meta['spiderid'],
                                                        appid=response.meta['appid'])
@@ -129,10 +130,38 @@ class AmazonSpider(JayClusterSpider):
                           callback=self.parse,
                           meta=response.meta)
 
+    @parse_method_wrapper
     def parse_item(self, response):
         sel = Selector(response)
         item = AmazonItem()
         self._enrich_base_data(item, response, is_update=False)
+        robot_checks = sel.xpath('//title[@dir="ltr"]/text()').extract()
+        if len(robot_checks) > 0:
+            self.log("BANNED by amazon.com: %s" % response.request)
+            # self.logger.info("BANNED by amazon.com: %s" % response.request)
+            print("BANNED by amazon.com: %s" % response.request)
+            if item['meta']['workers'][self.worker_id] >= 3:
+                self.crawler.stats.inc_drop_pages(
+                    crawlid=response.meta['crawlid'],
+                    spiderid=response.meta['spiderid'],
+                    appid=response.meta['appid'],
+                    url=response.request.url,
+                    worker_id=self.worker_id
+                )
+                self.log("drop response.request: %s" % response.request)
+                # self.logger.info("drop response.request: %s" % response.request)
+                print("drop response.request: %s" % response.request)
+                return
+            else:
+                self.crawler.stats.inc_banned_pages(
+                    crawlid=response.meta['crawlid'],
+                    spiderid=response.meta['spiderid'],
+                    appid=response.meta['appid'],
+                )
+                self.log("re-yield response.request: %s" % response.request)
+                # self.logger.info("re-yield response.request: %s" % response.request)
+                print("re-yield response.request: %s" % response.request)
+                return response.request
         node_id_re = re.compile(r'node=(?P<node_id>\w+)')
         # breadcrum
         node_id_hrefs = sel.xpath('//div[@id="wayfinding-breadcrumbs_feature_div"]//a/@href').extract()
@@ -167,6 +196,7 @@ class AmazonSpider(JayClusterSpider):
 
         return item
 
+    @parse_method_wrapper
     def parse_item_update(self, response):
         item = AmazonItem()
         meta = response.meta
@@ -178,7 +208,8 @@ class AmazonSpider(JayClusterSpider):
         if len(robot_checks) > 0:
             #self.log("BANNED by amazon.com: %s" % response.request)
             self._logger.info("Spiderid: %s Crawlid: %s BANNED by amazon.com: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
-            #print("BANNED by amazon.com: %s" % response.request)
+            print("BANNED by amazon.com: %s" % response.request)
+
             if item['meta']['workers'][self.worker_id] >= 3:
                 self.crawler.stats.inc_drop_pages(
                     crawlid=response.meta['crawlid'],
@@ -187,9 +218,9 @@ class AmazonSpider(JayClusterSpider):
                     url=response.request.url,
                     worker_id=self.worker_id
                 )
-                #self.log("drop response.request: %s" % response.request)
+
                 self._logger.info("Spiderid: %s Crawlid: %s drop response.request: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
-                #print("drop response.request: %s" % response.request)
+                print("drop response.request: %s" % response.request)
                 return
             else:
                 self.crawler.stats.inc_banned_pages(
@@ -199,7 +230,7 @@ class AmazonSpider(JayClusterSpider):
                 )
                 #self.log("re-yield response.request: %s" % response.request)
                 self._logger.info("Spiderid: %s Crawlid: %s re-yield response.request: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
-                #print("re-yield response.request: %s" % response.request)
+                print("re-yield response.request: %s" % response.request)
                 return response.request
 
         asin_divs = sel.xpath('//input[@id="ASIN"]/@value').extract()

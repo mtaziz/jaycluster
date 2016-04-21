@@ -4,7 +4,7 @@ from scrapy.http import Request
 from urlparse import urljoin
 from jay_cluster_spider import JayClusterSpider
 from crawling.items import JomashopItem
-from crawling.utils import format_html_string
+from crawling.utils import format_html_string, parse_method_wrapper
 import re
 
 
@@ -17,6 +17,7 @@ class JomashopSpider(JayClusterSpider):
     def __init__(self, *args, **kwargs):
         super(JomashopSpider, self).__init__(*args, **kwargs)
 
+    @parse_method_wrapper
     def parse(self, response):
          # 保存start_url初始值
         if len(JomashopSpider.start_url) == 0:
@@ -44,7 +45,7 @@ class JomashopSpider(JayClusterSpider):
                 meta=response.meta,
                 dont_filter=True)
 
-
+    @parse_method_wrapper
     def parse_item(self, response):
         self.log('JomashopSpider#parse_item...')
         item = JomashopItem()
@@ -63,6 +64,7 @@ class JomashopSpider(JayClusterSpider):
 
         return item
 
+    @parse_method_wrapper
     def parse_item_update(self, response):
         self.log('JomashopSpider#parse_item_update...')
         item = JomashopItem()
