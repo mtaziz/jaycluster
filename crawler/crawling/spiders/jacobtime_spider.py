@@ -22,13 +22,18 @@ class JacobtimeSpider(JayClusterSpider):
                 response.xpath('//*[@id="content"]//div[@class="product-list"]/div/div[@class="link-block"]/a[2]/@href').extract()
             ))
         ]
+        if not len(item_urls) and not response.meta.get("if_next_page"):
+            self.crawler.stats.set_failed_download_value(response.meta, "this url is invalid", True)
+            self.crawler.stats.set_total_pages(response.meta['crawlid'], response.meta['spiderid'],
+                                               response.meta['appid'])
+            return
         self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
         for item_url in item_urls:
             yield Request(url=item_url,
                           callback=self.parse_item,
                           meta=response.meta,
                           dont_filter=True)
-
+        response.meta["if_next_page"] = True
         next_page_urls = [
             urljoin(response.url, x) for x in list(set(
                 response.xpath('//a[@title=" Next Page "]/@href').extract()

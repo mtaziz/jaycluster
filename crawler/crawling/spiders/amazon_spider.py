@@ -83,7 +83,7 @@ class AmazonSpider(JayClusterSpider):
         sel = Selector(response)
         robot_checks = sel.xpath('//title[@dir="ltr"]/text()').extract()
         if len(robot_checks) > 0:
-            self._logger.info("BANNED by amazon.com: %s" % response.request)
+            self.log("BANNED by amazon.com: %s" % response.request)
             print("BANNED by amazon.com: %s" % response.request)
             if response.meta.setdefault('workers',{}).setdefault(self.worker_id, 0) >= 3:
                 if not response.meta.get("if_next_page"):
@@ -97,7 +97,7 @@ class AmazonSpider(JayClusterSpider):
                     url=response.request.url,
                     worker_id=self.worker_id
                 )
-                self._logger.info("drop response.request: %s" % response.request)
+                self.log("drop response.request: %s" % response.request)
                 print("drop response.request: %s" % response.request)
                 return
             else:
@@ -109,9 +109,13 @@ class AmazonSpider(JayClusterSpider):
                     appid=response.meta['appid'],
                 )
 
-                self._logger.info("re-yield response.request: %s" % response.request)
+                self.log("re-yield response.request: %s" % response.request)
                 print("re-yield response.request: %s" % response.request)
                 yield response.request
+        if not len(item_urls) and not response.meta.get("if_next_page"):
+            self.crawler.stats.set_failed_download_value(response.meta, "this url is invalid", True)
+            self.crawler.stats.set_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
+            return
         self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
         for item_url in item_urls:
             yield Request(url=item_url,
@@ -124,7 +128,7 @@ class AmazonSpider(JayClusterSpider):
             ))
         ]
         response.meta["if_next_page"] = True
-
+        response.meta.setdefault('workers', {})[self.worker_id] = 0
         for next_page_url in next_page_urls:
             yield Request(url=next_page_url,
                           callback=self.parse,
@@ -137,7 +141,7 @@ class AmazonSpider(JayClusterSpider):
         self._enrich_base_data(item, response, is_update=False)
         robot_checks = sel.xpath('//title[@dir="ltr"]/text()').extract()
         if len(robot_checks) > 0:
-            self._logger("BANNED by amazon.com: %s" % response.request)
+            self.log("BANNED by amazon.com: %s" % response.request)
             # self.logger.info("BANNED by amazon.com: %s" % response.request)
             print("BANNED by amazon.com: %s" % response.request)
             if item['meta']['workers'][self.worker_id] >= 3:
@@ -148,7 +152,7 @@ class AmazonSpider(JayClusterSpider):
                     url=response.request.url,
                     worker_id=self.worker_id
                 )
-                self._logger("drop response.request: %s" % response.request)
+                self.log("drop response.request: %s" % response.request)
                 # self.logger.info("drop response.request: %s" % response.request)
                 print("drop response.request: %s" % response.request)
                 return
@@ -158,7 +162,7 @@ class AmazonSpider(JayClusterSpider):
                     spiderid=response.meta['spiderid'],
                     appid=response.meta['appid'],
                 )
-                self._logger("re-yield response.request: %s" % response.request)
+                self.log("re-yield response.request: %s" % response.request)
                 # self.logger.info("re-yield response.request: %s" % response.request)
                 print("re-yield response.request: %s" % response.request)
                 return response.request
@@ -207,7 +211,7 @@ class AmazonSpider(JayClusterSpider):
         robot_checks = sel.xpath('//title[@dir="ltr"]/text()').extract()
         if len(robot_checks) > 0:
             #self.log("BANNED by amazon.com: %s" % response.request)
-            self._logger.info("Spiderid: %s Crawlid: %s BANNED by amazon.com: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
+            self.log("Spiderid: %s Crawlid: %s BANNED by amazon.com: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
             print("BANNED by amazon.com: %s" % response.request)
 
             if item['meta']['workers'][self.worker_id] >= 3:
@@ -219,7 +223,7 @@ class AmazonSpider(JayClusterSpider):
                     worker_id=self.worker_id
                 )
 
-                self._logger.info("Spiderid: %s Crawlid: %s drop response.request: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
+                self.log("Spiderid: %s Crawlid: %s drop response.request: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
                 print("drop response.request: %s" % response.request)
                 return
             else:
@@ -229,7 +233,7 @@ class AmazonSpider(JayClusterSpider):
                     appid=response.meta['appid'],
                 )
                 #self.log("re-yield response.request: %s" % response.request)
-                self._logger.info("Spiderid: %s Crawlid: %s re-yield response.request: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
+                self.log("Spiderid: %s Crawlid: %s re-yield response.request: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
                 print("re-yield response.request: %s" % response.request)
                 return response.request
 
@@ -294,7 +298,7 @@ class AmazonSpider(JayClusterSpider):
 
             if ((len(item['list_price']) + len(item['price'])) <= 0):
                 #self.log("response body ILLEGAL: %s, %d, %d. Dumping ..." % (item['asin'], response.status, len(response.body)))
-                self._logger.info("response body ILLEGAL: %s, %d, %d. Dumping ..." % (item['asin'], response.status, len(response.body)))
+                self.log("response body ILLEGAL: %s, %d, %d. Dumping ..." % (item['asin'], response.status, len(response.body)))
                 dump_response_body(item['asin'], response.body)
 
             shipping_cost_string_ourprice = ''.join(sel.xpath('//*[@id="ourprice_shippingmessage"]/span/text()').extract()).strip()
@@ -302,7 +306,7 @@ class AmazonSpider(JayClusterSpider):
             shipping_cost_string = shipping_cost_string_ourprice or shipping_cost_string_saleprice
             item['shipping_cost'] = extract_shipping_cost_price_from_shipping_cost_string(shipping_cost_string)
             #self.log("yield item in parse: %s" % item)
-            self._logger.info("Spiderid: %s Crawlid: %s yield item in parse: %s" % (response.meta['spiderid'],response.meta['crawlid'],item))
+            self.log("Spiderid: %s Crawlid: %s yield item in parse: %s" % (response.meta['spiderid'],response.meta['crawlid'],item))
 
             self.crawler.stats.inc_crawled_pages(
                 crawlid=response.meta['crawlid'],
@@ -327,11 +331,11 @@ class AmazonSpider(JayClusterSpider):
                 dont_filter=response.request.dont_filter
             )
             #self.log("yield request in parse: %s" % req)
-            self._logger.info("Spiderid: %s Crawlid: %s yield request in parse: %s" % (response.meta['spiderid'],response.meta['crawlid'],req))
+            self.log("Spiderid: %s Crawlid: %s yield request in parse: %s" % (response.meta['spiderid'],response.meta['crawlid'],req))
             return req
         else:
             #self.log("yield item in parse: %s" % item)
-            self._logger.info("yield item in parse: %s" % item)
+            self.log("yield item in parse: %s" % item)
             self.crawler.stats.inc_crawled_pages(
                 crawlid=response.meta['crawlid'],
                 spiderid=response.meta['spiderid'],
@@ -344,7 +348,7 @@ class AmazonSpider(JayClusterSpider):
         shipping_cost_string = ''.join(response.xpath('//*[@id="olpTabContent"]//p[@class="olpShippingInfo"]//span[@class="a-color-secondary"]//text()').extract()).strip()
         item['shipping_cost'] = extract_shipping_cost_price_from_shipping_cost_string(shipping_cost_string)
         #self.log("yield item in parse_shipping_cost: %s" % item)
-        self._logger.info("Spiderid: %s Crawlid: %s yield item in parse_shipping_cost: %s" % (response.meta['spiderid'],response.meta['crawlid'],item))
+        self.log("Spiderid: %s Crawlid: %s yield item in parse_shipping_cost: %s" % (response.meta['spiderid'],response.meta['crawlid'],item))
         # self.crawler.stats.inc_crawled_pages(
         #         crawlid=response.meta['crawlid'],
         #         spiderid=response.meta['spiderid'],
@@ -355,7 +359,7 @@ class AmazonSpider(JayClusterSpider):
 
     def errback(self, failure):
         #self.log(">>> errback: %s" % failure)
-        self._logger.info(">>> errback: %s" % failure)
+        self.log(">>> errback: %s" % failure)
         item = AmazonItem()
         if failure and failure.value and hasattr(failure.value, 'response'):
             response = failure.value.response
@@ -367,12 +371,12 @@ class AmazonSpider(JayClusterSpider):
                     'ts': time.strftime("%Y%m%d%H%M%S")
                 }
             else:
-                self._logger("failure has NO response: %s" % item)
+                self.log("failure has NO response: %s" % item)
         else:
-            self._logger("failure or failure.value is NULL, failure: %s" %failure)
+            self.log("failure or failure.value is NULL, failure: %s" %failure)
 
         #self.log("<<< errback: %s" % item)
-        self._logger.info("<<< errback: %s" % item)
+        self.log("<<< errback: %s" % item)
         self.crawler.stats.inc_crawled_pages(
             crawlid=response.meta['crawlid'],
             spiderid=response.meta['spiderid'],

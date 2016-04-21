@@ -68,17 +68,21 @@ class MyStatsCollector(MemoryStatsCollector):
             }
         )
 
-    def set_failed_download_value(self, meta, reason=None):
+    def set_failed_download_value(self, meta, reason=None, flag=False):
         """
         auto increase failed download pages
         :param crawlid:
         :return: None
         """
-        self.redis_conn.hincrby("crawlid:%s" % meta.get('crawlid'), "failed_download_pages", 1)
+        if flag:
+            self.redis_conn.hset("crawlid:%s" % meta.get('crawlid'), "failed_download_pages", 1)
+        else:
+            self.redis_conn.hincrby("crawlid:%s" % meta.get('crawlid'), "failed_download_pages", 1)
         self._set_spiderid_and_appid(meta.get('crawlid'), meta.get('spiderid'), meta.get('appid'))
         self.set_failed_download_page(meta.get('crawlid'), meta.get('url'), reason)
 
     def set_failed_download_images(self, meta, reason=None):
+
         self.redis_conn.hincrby("crawlid:%s" % meta.get('crawlid'), "failed_download_images", 1)
         self._set_spiderid_and_appid(meta.get('crawlid'), meta.get('spiderid'), meta.get('appid'))
         self.set_failed_download_images_url(meta.get('crawlid'), meta.get('url'), reason)
@@ -105,9 +109,10 @@ class MyStatsCollector(MemoryStatsCollector):
         self.redis_conn.hincrby("crawlid:%s" % crawlid, "total_pages", num)
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
 
-    def set_total_pages(self, crawlid, spiderid, appid, total_pages):
-        self.redis_conn.hset("crawlid:%s" % crawlid, "total_pages", total_pages)
+    def set_total_pages(self, crawlid, spiderid, appid, num=1):
+        self.redis_conn.hset("crawlid:%s" % crawlid, "total_pages", num)
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
+
 
     def inc_crawled_pages(self, crawlid, spiderid, appid):
         self.redis_conn.hincrby("crawlid:%s" % crawlid, "crawled_pages", 1)

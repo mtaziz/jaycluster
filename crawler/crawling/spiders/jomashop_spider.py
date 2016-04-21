@@ -27,6 +27,11 @@ class JomashopSpider(JayClusterSpider):
         product_urls = sel.xpath('//ul[@class="products-grid"]/li//a[@class="product-image"]/@href').extract()
         product_urls = set(product_urls)
         has_more_page = not (len(product_urls) < JomashopSpider.products_count_per_page)
+        if not len(product_urls) and not response.meta.get("if_next_page"):
+            self.crawler.stats.set_failed_download_value(response.meta, "this url is invalid", True)
+            self.crawler.stats.set_total_pages(response.meta['crawlid'], response.meta['spiderid'],
+                                            response.meta['appid'])
+            return
         self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(product_urls))
 
         for product_url in product_urls:
@@ -35,7 +40,7 @@ class JomashopSpider(JayClusterSpider):
                 callback=self.parse_item,
                 meta=response.meta,
                 dont_filter=True)
-
+        response.meta["if_next_page"] = True
         if has_more_page:
             JomashopSpider.page_index += 1
             more_page_url = "%s&p=%d" % (JomashopSpider.start_url, JomashopSpider.page_index)
