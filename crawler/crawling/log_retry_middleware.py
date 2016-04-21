@@ -2,6 +2,7 @@ import logging
 import redis
 import socket
 import time
+from utils import get_raspberrypi_ip_address
 from scrapy.utils.response import response_status_message
 
 from scrapy.xlib.tx import ResponseFailed
@@ -34,7 +35,8 @@ class LogRetryMiddleware(object):
         my_json = settings.get('SC_LOG_JSON', False)
         my_dir = settings.get('SC_LOG_DIR', 'logs')
         my_bytes = settings.get('SC_LOG_MAX_BYTES', '10MB')
-        my_file = settings.get('SC_LOG_FILE', 'main.log')
+        #my_file = settings.get('SC_LOG_FILE', 'main.log')
+        my_file = "%s_%s.log" % (settings['SPIDER_NAME'], get_raspberrypi_ip_address())
         my_backups = settings.get('SC_LOG_BACKUPS', 5)
 
         self.logger = LogFactory.get_instance(json=my_json,

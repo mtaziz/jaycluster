@@ -287,7 +287,7 @@ class DistributedScheduler(object):
         self.redis_conn.expire(key, self.ip_update_interval * 2)
 
     @classmethod
-    def from_settings(cls, settings):
+    def from_settings(cls, settings, spidername):
         server = redis.Redis(host=settings.get('REDIS_HOST'),
                              port=settings.get('REDIS_PORT'))
         persist = settings.get('SCHEDULER_PERSIST', True)
@@ -308,7 +308,10 @@ class DistributedScheduler(object):
         my_json = settings.get('SC_LOG_JSON', True)
         my_dir = settings.get('SC_LOG_DIR', 'logs')
         my_bytes = settings.get('SC_LOG_MAX_BYTES', '10MB')
-        my_file = settings.get('SC_LOG_FILE')
+        # my_file = settings.get('SC_LOG_FILE')
+        my_file = "%s_%s.log"%(spidername, get_raspberrypi_ip_address())
+        print("test"*100,my_file)
+        print my_file
         my_backups = settings.get('SC_LOG_BACKUPS', 5)
 
         logger = LogFactory.get_instance(json=my_json,
@@ -325,7 +328,7 @@ class DistributedScheduler(object):
 
     @classmethod
     def from_crawler(cls, crawler):
-        return cls.from_settings(crawler.settings)
+        return cls.from_settings(crawler.settings, crawler.spider.name)
 
     def open(self, spider):
         self.spider = spider
@@ -481,8 +484,7 @@ class DistributedScheduler(object):
         #     print('after   self.report_self()')
         item = self.find_item()
         print('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
-        #self.spider.log('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
-        self.logger.info('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
+        #self.logger.info('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
 
         if item:
             self.logger.debug("Found url to crawl {url}" \

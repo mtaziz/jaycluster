@@ -177,7 +177,7 @@ class AmazonSpider(JayClusterSpider):
         robot_checks = sel.xpath('//title[@dir="ltr"]/text()').extract()
         if len(robot_checks) > 0:
             #self.log("BANNED by amazon.com: %s" % response.request)
-            self._logger.info("BANNED by amazon.com: %s" % response.request)
+            self._logger.info("Spiderid: %s Crawlid: %s BANNED by amazon.com: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
             #print("BANNED by amazon.com: %s" % response.request)
             if item['meta']['workers'][self.worker_id] >= 3:
                 self.crawler.stats.inc_drop_pages(
@@ -188,7 +188,7 @@ class AmazonSpider(JayClusterSpider):
                     worker_id=self.worker_id
                 )
                 #self.log("drop response.request: %s" % response.request)
-                self._logger.info("drop response.request: %s" % response.request)
+                self._logger.info("Spiderid: %s Crawlid: %s drop response.request: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
                 #print("drop response.request: %s" % response.request)
                 return
             else:
@@ -198,7 +198,7 @@ class AmazonSpider(JayClusterSpider):
                     appid=response.meta['appid'],
                 )
                 #self.log("re-yield response.request: %s" % response.request)
-                self._logger.info("re-yield response.request: %s" % response.request)
+                self._logger.info("Spiderid: %s Crawlid: %s re-yield response.request: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
                 #print("re-yield response.request: %s" % response.request)
                 return response.request
 
@@ -271,7 +271,7 @@ class AmazonSpider(JayClusterSpider):
             shipping_cost_string = shipping_cost_string_ourprice or shipping_cost_string_saleprice
             item['shipping_cost'] = extract_shipping_cost_price_from_shipping_cost_string(shipping_cost_string)
             #self.log("yield item in parse: %s" % item)
-            self._logger.info("yield item in parse: %s" % item)
+            self._logger.info("Spiderid: %s Crawlid: %s yield item in parse: %s" % (response.meta['spiderid'],response.meta['crawlid'],item))
 
             self.crawler.stats.inc_crawled_pages(
                 crawlid=response.meta['crawlid'],
@@ -296,7 +296,7 @@ class AmazonSpider(JayClusterSpider):
                 dont_filter=response.request.dont_filter
             )
             #self.log("yield request in parse: %s" % req)
-            self._logger.info("yield request in parse: %s" % req)
+            self._logger.info("Spiderid: %s Crawlid: %s yield request in parse: %s" % (response.meta['spiderid'],response.meta['crawlid'],req))
             return req
         else:
             #self.log("yield item in parse: %s" % item)
@@ -313,7 +313,7 @@ class AmazonSpider(JayClusterSpider):
         shipping_cost_string = ''.join(response.xpath('//*[@id="olpTabContent"]//p[@class="olpShippingInfo"]//span[@class="a-color-secondary"]//text()').extract()).strip()
         item['shipping_cost'] = extract_shipping_cost_price_from_shipping_cost_string(shipping_cost_string)
         #self.log("yield item in parse_shipping_cost: %s" % item)
-        self._logger.info("yield item in parse_shipping_cost: %s" % item)
+        self._logger.info("Spiderid: %s Crawlid: %s yield item in parse_shipping_cost: %s" % (response.meta['spiderid'],response.meta['crawlid'],item))
         # self.crawler.stats.inc_crawled_pages(
         #         crawlid=response.meta['crawlid'],
         #         spiderid=response.meta['spiderid'],
