@@ -4,7 +4,7 @@ from scrapy.http import Request
 from urlparse import urljoin
 from jay_cluster_spider import JayClusterSpider
 from crawling.items import ZapposItem
-from crawling.utils import format_html_string
+from crawling.utils import format_html_string, parse_method_wrapper
 import json
 from itertools import chain
 import re
@@ -19,6 +19,7 @@ class ZapposSpider(JayClusterSpider):
     def __init__(self, *args, **kwargs):
         super(ZapposSpider, self).__init__(*args, **kwargs)
 
+    @parse_method_wrapper
     def parse(self, response):
         item_urls = [
             urljoin(response.url, x) for x in list(set(
@@ -42,6 +43,7 @@ class ZapposSpider(JayClusterSpider):
                           callback=self.parse,
                           meta=response.meta)
 
+    @parse_method_wrapper
     def parse_item(self, response):
         sel = Selector(response)
         item = ZapposItem()
@@ -82,6 +84,7 @@ class ZapposSpider(JayClusterSpider):
 
         return item
 
+    @parse_method_wrapper
     def parse_item_update(self, response):
         item = ZapposItem()
         self._enrich_base_data(item, response, is_update=True)

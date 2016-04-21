@@ -4,7 +4,7 @@ from scrapy.http import Request
 from urlparse import urljoin
 from jay_cluster_spider import JayClusterSpider
 from crawling.items import FinishlineItem
-from crawling.utils import format_html_string
+from crawling.utils import format_html_string, parse_method_wrapper
 import json
 import re
 
@@ -15,6 +15,7 @@ class FinishlineSpider(JayClusterSpider):
     def __init__(self, *args, **kwargs):
         super(FinishlineSpider, self).__init__(*args, **kwargs)
 
+    @parse_method_wrapper
     def parse(self, response):
         print("FinishlineSpider#parse ...")
         self._logger.debug("FinishlineSpider#parse ...")
@@ -51,6 +52,7 @@ class FinishlineSpider(JayClusterSpider):
         item['image_urls'] = image_urls
         yield item
 
+    @parse_method_wrapper
     def parse_item(self, response):
         print("FinishlineSpider#parse_item ...")
         self._logger.debug("FinishlineSpider#parse_item ...")
@@ -97,6 +99,7 @@ class FinishlineSpider(JayClusterSpider):
         print('self.crawler.stats.inc_crawled_pages::::::::::',)
         yield req
 
+    @parse_method_wrapper
     def parse_item_update(self, response):
         item = FinishlineItem()
         self._enrich_base_data(item, response, is_update=True)

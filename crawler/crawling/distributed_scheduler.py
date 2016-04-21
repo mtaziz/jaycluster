@@ -21,7 +21,7 @@ from scutils.zookeeper_watcher import ZookeeperWatcher
 from scutils.redis_queue import RedisPriorityQueue
 from scutils.redis_throttled_queue import RedisThrottledQueue
 from scutils.log_factory import LogFactory
-from crawling.utils import get_method
+from crawling.utils import get_method, next_request_method_wrapper
 from utils import get_raspberrypi_ip_address
 
 try:
@@ -90,6 +90,8 @@ class DistributedScheduler(object):
 
         # if we need better uuid's mod this line
         self.my_uuid = str(uuid.uuid4()).split('-')[4]
+        # wrapper next_request
+        self.next_request = next_request_method_wrapper(self)(self.next_request)
 
     def setup_zookeeper(self):
         self.assign_path = settings.get('ZOOKEEPER_ASSIGN_PATH', "")
@@ -437,7 +439,7 @@ class DistributedScheduler(object):
             for key in self.queue_keys:
                 # the throttled queue only returns an item if it is allowed
                 item = self.queue_dict[key].pop()
-
+                self.present_item = item
                 #self.spider.log('key: %s ' % key)
                 self.logger.info('key: %s ' % key)
                 #self.spider.log('len(self.queue_dict[key]): %s '% len(self.queue_dict[key]))

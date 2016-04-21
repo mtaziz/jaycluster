@@ -5,7 +5,7 @@ from scrapy.http import Request
 from urlparse import urljoin
 from jay_cluster_spider import JayClusterSpider
 from crawling.items import AshfordItem
-from crawling.utils import format_html_string
+from crawling.utils import format_html_string, parse_method_wrapper
 
 
 class AshfordSpider(JayClusterSpider):
@@ -15,6 +15,7 @@ class AshfordSpider(JayClusterSpider):
     def __init__(self, *args, **kwargs):
         super(AshfordSpider, self).__init__(*args, **kwargs)
 
+    @parse_method_wrapper
     def parse(self, response):
         item_urls = [
             urljoin(response.url, x) for x in list(set(
@@ -40,6 +41,7 @@ class AshfordSpider(JayClusterSpider):
                           meta=response.meta,
                           dont_filter=True)
 
+    @parse_method_wrapper
     def parse_item(self, response):
         self.log('AshfordSpider#parse_item...')
         item = AshfordItem()
@@ -75,7 +77,7 @@ class AshfordSpider(JayClusterSpider):
         item['chinese_detail'] = format_html_string(''.join(sel.xpath('//div[@id="tab1_info"]').extract()).strip())
         return item
 
-
+    @parse_method_wrapper
     def parse_item_update(self, response):
         self.log('AshfordSpider#parse_item_update...')
         item = AshfordItem()

@@ -4,7 +4,7 @@ from scrapy.http import Request
 from urlparse import urljoin
 from jay_cluster_spider import JayClusterSpider
 from crawling.items import DrugstoreItem
-from crawling.utils import format_html_string, re_search
+from crawling.utils import format_html_string, re_search, parse_method_wrapper
 import lxml.html
 import urllib2
 
@@ -15,6 +15,7 @@ class DrugstoreSpider(JayClusterSpider):
     def __init__(self, *args, **kwargs):
         super(DrugstoreSpider, self).__init__(*args, **kwargs)
 
+    @parse_method_wrapper
     def parse(self, response):
         print("DrugstoreSpider#parse ...")
         self._logger.debug("DrugstoreSpider#parse ...")
@@ -42,6 +43,7 @@ class DrugstoreSpider(JayClusterSpider):
                           meta=response.meta,
                           dont_filter=True)
 
+    @parse_method_wrapper
     def parse_item(self, response):
         print("FinishlineSpider#parse_item ...")
         self._logger.debug("FinishlineSpider#parse_item ...")
@@ -88,6 +90,7 @@ class DrugstoreSpider(JayClusterSpider):
 
         return item
 
+    @parse_method_wrapper
     def parse_item_update(self, response):
         item = DrugstoreItem()
         self._enrich_base_data(item, response, is_update=True)
