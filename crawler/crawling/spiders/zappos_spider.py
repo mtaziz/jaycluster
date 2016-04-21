@@ -51,6 +51,8 @@ class ZapposSpider(JayClusterSpider):
         item['productId'] = ''.join(sel.xpath('//form[@id="prForm"]/input[@name="productId"]/@value').extract()).strip()
 
         if item['productId'] in self.seen_products:
+            self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'],
+                                               response.meta['appid'], -1)
             return
         else:
             self.seen_products.add(item['productId'])
@@ -75,12 +77,6 @@ class ZapposSpider(JayClusterSpider):
             spiderid=response.meta['spiderid'],
             appid=response.meta['appid']
         )
-        print('item====', item)
-        self.crawler.stats.inc_crawled_pages(
-            crawlid=response.meta['crawlid'],
-            spiderid=response.meta['spiderid'],
-            appid=response.meta['appid']
-        )
 
         return item
 
@@ -94,7 +90,6 @@ class ZapposSpider(JayClusterSpider):
             spiderid=response.meta['spiderid'],
             appid=response.meta['appid']
         )
-        print('item====', item)
         return item
 
     def _enrich_same_part(self, item, response):

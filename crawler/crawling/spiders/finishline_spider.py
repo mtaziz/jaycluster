@@ -4,7 +4,7 @@ from scrapy.http import Request
 from urlparse import urljoin
 from jay_cluster_spider import JayClusterSpider
 from crawling.items import FinishlineItem
-from crawling.utils import format_html_string, parse_method_wrapper
+from crawling.utils import format_html_string, parse_method_wrapper, parse_image_method_wrapper
 import json
 import re
 
@@ -43,14 +43,15 @@ class FinishlineSpider(JayClusterSpider):
                           meta=response.meta,
                           dont_filter=True)
 
-    def parse_images(self,response):
+    @parse_image_method_wrapper
+    def parse_images(self, response):
         item = response.meta['item-half']
         m = re.findall(r'"url": "(.*?)"', response.body)
         image_urls = []
         for x in m:
             image_urls.append(x)
         item['image_urls'] = image_urls
-        yield item
+        return item
 
     @parse_method_wrapper
     def parse_item(self, response):

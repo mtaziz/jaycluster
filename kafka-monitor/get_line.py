@@ -3,7 +3,7 @@
 def get_line_count(count, src_filename="ASIN", dic_filename="result"):
     f_in = open("%s.txt"%src_filename, "r")
     f_out = open("%s.txt"%dic_filename, "w")
-#    f_in.readline()
+    f_in.readline()
     for i in range(int(count)):
 	f_out.write(f_in.readline())
 

@@ -78,6 +78,14 @@ class MyStatsCollector(MemoryStatsCollector):
         self._set_spiderid_and_appid(meta.get('crawlid'), meta.get('spiderid'), meta.get('appid'))
         self.set_failed_download_page(meta.get('crawlid'), meta.get('url'), reason)
 
+    def set_failed_download_images(self, meta, reason=None):
+        self.redis_conn.hincrby("crawlid:%s" % meta.get('crawlid'), "failed_download_images", 1)
+        self._set_spiderid_and_appid(meta.get('crawlid'), meta.get('spiderid'), meta.get('appid'))
+        self.set_failed_download_images_url(meta.get('crawlid'), meta.get('url'), reason)
+
+    def set_failed_download_images_url(self, crawlid, url, reason):
+        self.redis_conn.hset("failed_images:%s" % crawlid, url, reason)
+
     def set_failed_download_page(self, crawlid, url, reason):
         self.redis_conn.hset("failed_pages:%s"%crawlid, url, reason)
 
