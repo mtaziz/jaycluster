@@ -312,8 +312,6 @@ class DistributedScheduler(object):
         my_bytes = settings.get('SC_LOG_MAX_BYTES', '10MB')
         # my_file = settings.get('SC_LOG_FILE')
         my_file = "%s_%s.log"%(spidername, get_raspberrypi_ip_address())
-        print("test"*100,my_file)
-        print my_file
         my_backups = settings.get('SC_LOG_BACKUPS', 5)
 
         logger = LogFactory.get_instance(json=my_json,
