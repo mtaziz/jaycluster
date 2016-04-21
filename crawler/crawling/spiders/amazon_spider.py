@@ -12,6 +12,7 @@ from crawling.settings import MONGODB_SERVER, MONGODB_PORT, MONGODB_DB
 import pymongo
 
 
+
 mongodb_conn = pymongo.MongoClient(MONGODB_SERVER, MONGODB_PORT)
 mongodb_db = mongodb_conn[MONGODB_DB]
 mongodb_collection_amazon_true_urls = mongodb_db['amazon_true_urls']
@@ -67,22 +68,10 @@ class AmazonSpider(JayClusterSpider):
 
     name = "amazon"
 
-    logger = LogFactory.get_instance(json=True,
-                                     name='amazon_logger',
-                                     stdout=False,
-                                     level='DEBUG',
-                                     dir='logs',
-                                     file='amazon.log',
-                                     bytes='10MB',
-                                     backups=5)
+
 
     def __init__(self, *args, **kwargs):
         super(AmazonSpider, self).__init__(*args, **kwargs)
-
-
-
-
-
 
 
 
@@ -95,7 +84,7 @@ class AmazonSpider(JayClusterSpider):
         sel = Selector(response)
         robot_checks = sel.xpath('//title[@dir="ltr"]/text()').extract()
         if len(robot_checks) > 0:
-            self.logger.info("BANNED by amazon.com: %s" % response.request)
+            self._logger.info("BANNED by amazon.com: %s" % response.request)
             print("BANNED by amazon.com: %s" % response.request)
             if response.meta.setdefault('workers',{}).setdefault(self.worker_id, 0) >= 3:
                 self.crawler.stats.inc_total_pages(crawlid=response.meta['crawlid'],
@@ -108,7 +97,7 @@ class AmazonSpider(JayClusterSpider):
                     url=response.request.url,
                     worker_id=self.worker_id
                 )
-                self.logger.info("drop response.request: %s" % response.request)
+                self._logger.info("drop response.request: %s" % response.request)
                 print("drop response.request: %s" % response.request)
                 return
             else:
@@ -119,7 +108,7 @@ class AmazonSpider(JayClusterSpider):
                     spiderid=response.meta['spiderid'],
                     appid=response.meta['appid'],
                 )
-                self.logger.info("re-yield response.request: %s" % response.request)
+                self._logger.info("re-yield response.request: %s" % response.request)
                 print("re-yield response.request: %s" % response.request)
                 yield response.request
         self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
@@ -187,7 +176,7 @@ class AmazonSpider(JayClusterSpider):
         robot_checks = sel.xpath('//title[@dir="ltr"]/text()').extract()
         if len(robot_checks) > 0:
             #self.log("BANNED by amazon.com: %s" % response.request)
-            self.logger.info("BANNED by amazon.com: %s" % response.request)
+            self._logger.info("BANNED by amazon.com: %s" % response.request)
             #print("BANNED by amazon.com: %s" % response.request)
             if item['meta']['workers'][self.worker_id] >= 3:
                 self.crawler.stats.inc_drop_pages(
@@ -198,7 +187,7 @@ class AmazonSpider(JayClusterSpider):
                     worker_id=self.worker_id
                 )
                 #self.log("drop response.request: %s" % response.request)
-                self.logger.info("drop response.request: %s" % response.request)
+                self._logger.info("drop response.request: %s" % response.request)
                 #print("drop response.request: %s" % response.request)
                 return
             else:
@@ -208,7 +197,7 @@ class AmazonSpider(JayClusterSpider):
                     appid=response.meta['appid'],
                 )
                 #self.log("re-yield response.request: %s" % response.request)
-                self.logger.info("re-yield response.request: %s" % response.request)
+                self._logger.info("re-yield response.request: %s" % response.request)
                 #print("re-yield response.request: %s" % response.request)
                 return response.request
 
@@ -273,7 +262,7 @@ class AmazonSpider(JayClusterSpider):
 
             if ((len(item['list_price']) + len(item['price'])) <= 0):
                 #self.log("response body ILLEGAL: %s, %d, %d. Dumping ..." % (item['asin'], response.status, len(response.body)))
-                self.logger.info("response body ILLEGAL: %s, %d, %d. Dumping ..." % (item['asin'], response.status, len(response.body)))
+                self._logger.info("response body ILLEGAL: %s, %d, %d. Dumping ..." % (item['asin'], response.status, len(response.body)))
                 dump_response_body(item['asin'], response.body)
 
             shipping_cost_string_ourprice = ''.join(sel.xpath('//*[@id="ourprice_shippingmessage"]/span/text()').extract()).strip()
@@ -281,7 +270,7 @@ class AmazonSpider(JayClusterSpider):
             shipping_cost_string = shipping_cost_string_ourprice or shipping_cost_string_saleprice
             item['shipping_cost'] = extract_shipping_cost_price_from_shipping_cost_string(shipping_cost_string)
             #self.log("yield item in parse: %s" % item)
-            self.logger.info("yield item in parse: %s" % item)
+            self._logger.info("yield item in parse: %s" % item)
 
             self.crawler.stats.inc_crawled_pages(
                 crawlid=response.meta['crawlid'],
@@ -306,11 +295,11 @@ class AmazonSpider(JayClusterSpider):
                 dont_filter=response.request.dont_filter
             )
             #self.log("yield request in parse: %s" % req)
-            self.logger.info("yield request in parse: %s" % req)
+            self._logger.info("yield request in parse: %s" % req)
             return req
         else:
             #self.log("yield item in parse: %s" % item)
-            self.logger.info("yield item in parse: %s" % item)
+            self._logger.info("yield item in parse: %s" % item)
             self.crawler.stats.inc_crawled_pages(
                 crawlid=response.meta['crawlid'],
                 spiderid=response.meta['spiderid'],
@@ -323,7 +312,7 @@ class AmazonSpider(JayClusterSpider):
         shipping_cost_string = ''.join(response.xpath('//*[@id="olpTabContent"]//p[@class="olpShippingInfo"]//span[@class="a-color-secondary"]//text()').extract()).strip()
         item['shipping_cost'] = extract_shipping_cost_price_from_shipping_cost_string(shipping_cost_string)
         #self.log("yield item in parse_shipping_cost: %s" % item)
-        self.logger.info("yield item in parse_shipping_cost: %s" % item)
+        self._logger.info("yield item in parse_shipping_cost: %s" % item)
         # self.crawler.stats.inc_crawled_pages(
         #         crawlid=response.meta['crawlid'],
         #         spiderid=response.meta['spiderid'],
@@ -333,7 +322,7 @@ class AmazonSpider(JayClusterSpider):
 
     def errback(self, failure):
         #self.log(">>> errback: %s" % failure)
-        self.logger.info(">>> errback: %s" % failure)
+        self._logger.info(">>> errback: %s" % failure)
         item = AmazonItem()
         if failure and failure.value and hasattr(failure.value, 'response'):
             response = failure.value.response
@@ -346,11 +335,11 @@ class AmazonSpider(JayClusterSpider):
                 }
             else:
                 #self.log("failure has NO response: %s" % item)
-                self.logger.info("failure has NO response: %s" % item)
+                self._logger.info("failure has NO response: %s" % item)
         else:
             #self.log("failure or failure.value is NULL, failure: %s" %failure)
-            self.logger.info("failure or failure.value is NULL, failure: %s" % failure)
+            self._logger.info("failure or failure.value is NULL, failure: %s" % failure)
 
         #self.log("<<< errback: %s" % item)
-        self.logger.info("<<< errback: %s" % item)
+        self._logger.info("<<< errback: %s" % item)
         return item

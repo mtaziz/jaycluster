@@ -1,6 +1,5 @@
 import redis
 import sys
-import time
 import traceback
 import argparse
 import time
