@@ -22,6 +22,7 @@ from scutils.redis_queue import RedisPriorityQueue
 from scutils.redis_throttled_queue import RedisThrottledQueue
 from scutils.log_factory import LogFactory
 from crawling.utils import get_method
+from utils import get_raspberrypi_ip_address
 
 try:
     import cPickle as pickle
@@ -254,7 +255,7 @@ class DistributedScheduler(object):
         '''
         # assign local ip in case of exception
         self.old_ip = self.my_ip
-        self.my_ip = '127.0.0.1'
+        self.my_ip = get_raspberrypi_ip_address()
         try:
             obj = urllib2.urlopen(settings.get('PUBLIC_IP_URL',
                                   'http://ip.42.pl/raw'))
@@ -442,8 +443,8 @@ class DistributedScheduler(object):
                 #self.spider.log('len(self.queue_dict[key]): %s '% len(self.queue_dict[key]))
                 self.logger.info('len(self.queue_dict[key]): %s ' % len(self.queue_dict[key]))
 
-                #print('key: %s ' % key)
-                #print('len(self.queue_dict[key]): %s '% len(self.queue_dict[key]))
+                print('key: %s ' % key)
+                print('len(self.queue_dict[key]): %s '% len(self.queue_dict[key]))
 
                 if item:
                     return item
@@ -479,7 +480,7 @@ class DistributedScheduler(object):
         #     self.report_self()
         #     print('after   self.report_self()')
         item = self.find_item()
-        #print('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
+        print('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
         #self.spider.log('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
         self.logger.info('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
 

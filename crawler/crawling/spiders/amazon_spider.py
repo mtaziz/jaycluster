@@ -68,8 +68,6 @@ class AmazonSpider(JayClusterSpider):
 
     name = "amazon"
 
-
-
     def __init__(self, *args, **kwargs):
         super(AmazonSpider, self).__init__(*args, **kwargs)
 
@@ -87,9 +85,10 @@ class AmazonSpider(JayClusterSpider):
             self._logger.info("BANNED by amazon.com: %s" % response.request)
             print("BANNED by amazon.com: %s" % response.request)
             if response.meta.setdefault('workers',{}).setdefault(self.worker_id, 0) >= 3:
-                self.crawler.stats.inc_total_pages(crawlid=response.meta['crawlid'],
-                                                   spiderid=response.meta['spiderid'],
-                                                   appid=response.meta['appid'])
+                if not response.meta.get("if_next_pages"):
+                    self.crawler.stats.inc_total_pages(crawlid=response.meta['crawlid'],
+                                                       spiderid=response.meta['spiderid'],
+                                                       appid=response.meta['appid'])
                 self.crawler.stats.inc_drop_pages(
                     crawlid=response.meta['crawlid'],
                     spiderid=response.meta['spiderid'],
@@ -108,6 +107,7 @@ class AmazonSpider(JayClusterSpider):
                     spiderid=response.meta['spiderid'],
                     appid=response.meta['appid'],
                 )
+
                 self._logger.info("re-yield response.request: %s" % response.request)
                 print("re-yield response.request: %s" % response.request)
                 yield response.request
@@ -122,6 +122,7 @@ class AmazonSpider(JayClusterSpider):
                 response.xpath('//div[@id="pagn"]//span[@class="pagnRA"]/a/@href').extract()
             ))
         ]
+        response.meta["if_next_page"] = True
 
         for next_page_url in next_page_urls:
             yield Request(url=next_page_url,
@@ -320,6 +321,7 @@ class AmazonSpider(JayClusterSpider):
         # )
         yield item
 
+
     def errback(self, failure):
         #self.log(">>> errback: %s" % failure)
         self._logger.info(">>> errback: %s" % failure)
@@ -334,12 +336,16 @@ class AmazonSpider(JayClusterSpider):
                     'ts': time.strftime("%Y%m%d%H%M%S")
                 }
             else:
-                #self.log("failure has NO response: %s" % item)
-                self._logger.info("failure has NO response: %s" % item)
+                self._logger("failure has NO response: %s" % item)
         else:
-            #self.log("failure or failure.value is NULL, failure: %s" %failure)
-            self._logger.info("failure or failure.value is NULL, failure: %s" % failure)
+            self._logger("failure or failure.value is NULL, failure: %s" %failure)
 
         #self.log("<<< errback: %s" % item)
         self._logger.info("<<< errback: %s" % item)
+        self.crawler.stats.inc_crawled_pages(
+            crawlid=response.meta['crawlid'],
+            spiderid=response.meta['spiderid'],
+            appid=response.meta['appid']
+        )
+
         return item

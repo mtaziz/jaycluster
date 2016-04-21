@@ -5,7 +5,41 @@ import hashlib
 import socket
 import fcntl
 import struct
+import sys
+import traceback
+from functools import wraps
 
+def method_wrapper(func):
+    @wraps(func)
+    def wrapper_method(*args, **kwds):
+        try:
+            return func(*args, **kwds)
+        except Exception:
+            e = sys.exc_info()
+            self = args[0]
+            response = args[1]
+            msg = "error heppened in %s method. Error:%s"%(func.__name__, traceback.format_exception(*e))
+            self.log(msg)
+            self.crawler.stats.set_failed_download_value(response.meta, str(e[1]))
+    return wrapper_method
+
+def pipline_method_wrapper(func):
+    @wraps(func)
+    def wrapper_method(*args, **kwds):
+        count = 0
+        spider = args[2]
+        item = args[1]
+        while count < 3:
+            try:
+                return func(*args, **kwds)
+            except Exception:
+                e = sys.exc_info()
+                spider.log("error heppened in %s method. Error:%s, processing %s,"%(func.__name__, traceback.format_exception(*e), str(item)))
+                #spider.crawler.stats.set_failed_download_value(response.meta, str(e[1]))
+                continue
+        spider.crawler.stats.set_failed_download_value(item.meta, str(e[1]))
+        return item
+    return wrapper_method
 
 def _get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

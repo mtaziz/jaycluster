@@ -157,6 +157,7 @@ class KafkaPipeline(object):
         except Exception:
             item['success'] = False
             item['exception'] = traceback.format_exc()
+            raise
 
         return item
 
