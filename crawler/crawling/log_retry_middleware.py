@@ -30,7 +30,8 @@ class LogRetryMiddleware(object):
         '''
         # set up the default sc logger
         my_level = settings.get('SC_LOG_LEVEL', 'INFO')
-        my_name = settings.get('SC_LOGGER_NAME', 'sc-logger')
+        #my_name = settings.get('SC_LOGGER_NAME', 'sc-logger')
+        my_name = "%s_%s" % (settings['SPIDER_NAME'], get_raspberrypi_ip_address())
         my_output = settings.get('SC_LOG_STDOUT', True)
         my_json = settings.get('SC_LOG_JSON', False)
         my_dir = settings.get('SC_LOG_DIR', 'logs')

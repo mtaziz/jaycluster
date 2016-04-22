@@ -25,8 +25,7 @@ def main(crawlid, host="192.168.200.90"):
             pass
         else:
             key = "failed_pages:%s"%crawlid
-            p = redis_conn.
-            (key)
+            p = redis_conn.hgetall(key)
             format(p, True)
             if failed_images:
                 print_if = raw_input("show the failed download pages? y/n:")
