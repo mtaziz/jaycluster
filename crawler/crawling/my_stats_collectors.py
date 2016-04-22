@@ -130,10 +130,10 @@ class MyStatsCollector(MemoryStatsCollector):
         self.redis_conn.hincrby("crawlid:%s" % crawlid, "yield_pages", 1)
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
 
-    def inc_drop_pages(self, crawlid, spiderid, appid, url=None, worker_id=None):
+    def inc_drop_pages(self, crawlid, spiderid, appid, url=None, worker_id=None, page_type="unknow"):
         self.redis_conn.hincrby("crawlid:%s" % crawlid, "drop_pages", 1)
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
-        self.set_failed_download_page(crawlid, url, "the url banned many times by %s to drop"%worker_id)
+        self.set_failed_download_page(crawlid, url, "page type:%s. the url banned many times by %s to drop"%(page_type, worker_id))
 
     def inc_banned_pages(self, crawlid, spiderid, appid):
         self.redis_conn.hincrby("crawlid:%s" % crawlid, "banned_pages", 1)
