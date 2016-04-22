@@ -12,7 +12,7 @@ def format(d, f=False):
             print("%s -->  %s"%(k.center(20), v))
 
 
-def main_loop(crawlid,host):
+def main_loop(host):
     '''
     The internal while true main loop for the redis monitor
     '''
@@ -27,43 +27,43 @@ def main_loop(crawlid,host):
 
     logger.debug("Running main loop")
 
-    redis_conn = Redis(host)
-    key = "crawlid:%s"%crawlid
+    conn = Redis(host)
 
+
+    crawlerdict = {}
 
     while True:
-        # total_pages = int(redis_conn.hget(key, "total_pages") or 0)
-        # crawled_pages = int(redis_conn.hget(key, "crawled_pages") or 0)
-        # failed_pages = int(redis_conn.hget(key, "failed_download_pages") or 0)
-        # drop_pages = int(redis_conn.hget(key, "drop_pages") or 0)
-        # format(redis_conn.hgetall(key))
-        #
-        #
-        # if drop_pages or failed_pages:
-        #     key = "failed_pages:%s" % crawlid
-        #     p = redis_conn.hgetall(key)
-        #     format(p, True)
-        # if total_pages == crawled_pages + failed_pages + drop_pages and total_pages != 0:
-        #     print("finish")
-        # else:
-        #     print("haven't finished")
+        keys = conn.keys('crawlid:*')
+        for key in keys:
+            if len(key.split(":")) == 2:
+                elements = key.split(":")
+                crawlid = elements[1]
+                values = conn.hgetall(key)
+                updatetime = values['update_time']
+                if key not in crawlerdict:
+                    countnum = 0
+                    countlist = [updatetime, countnum]
+                    crawlerdict[key] = countlist
+                elif crawlerdict[key][0] == updatetime:
+                    if crawlerdict[key][1] == 3:
+                        print 'crawlid:', crawlid, '\t', 'it finished'
+                        continue
+                    else:
+                        crawlerdict[key][1] += 1
+                else:
+                    crawlerdict[key][0] = updatetime
 
-        for crawlkey in redis_conn.hscan_iter(key):
-            print(crawlkey)
-            logger.info(crawlkey)
-
-        print '------------------------------------------------------------------------'
 
         time.sleep(0.1)
 
-def main(crawlid, host="192.168.56.6"):
-    main_loop(crawlid,host)
+def main(host="192.168.200.90"):
+    main_loop(host)
 
 
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv)>2:
-        main(sys.argv[1], sys.argv[2])
-    else:
+    if len(sys.argv)==2:
         main(sys.argv[1])
+    else:
+        main()
