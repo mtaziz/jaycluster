@@ -5,8 +5,8 @@ from redis import Redis
 def format(d, f=False):
     for k, v in d.items():
         if f:
-            print("reason:%s"%v.ljust(22))
-            print("url:%s"%k.ljust(22))
+            print("reason --> %s"%v.ljust(22))
+            print("url    --> %s"%k.ljust(22))
         else:
             print("%s -->  %s"%(k.ljust(22), v))
 
@@ -21,7 +21,7 @@ def main(crawlid, host="192.168.200.90"):
     format(redis_conn.hgetall(key))
     if drop_pages or failed_pages:
         print_if = raw_input("show the failed pages(include failed_download_pages and drop_pages)? y/n:")
-        if print_if == "n":
+        if print_if != "y":
             pass
         else:
             key = "failed_pages:%s"%crawlid

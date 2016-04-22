@@ -49,8 +49,9 @@ def main():
     crawlid = args.crawlid or gen_crawlid()
 
     redis_conn = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
-
-
+    redis_conn.delete("crawlid:%s" % crawlid)
+    redis_conn.delete("failed_pages:%s" % crawlid)
+    redis_conn.delete("failed_images:%s" % crawlid)
     # 更新抓取
     if args.urlsfile:
         with open(args.urlsfile) as f:
