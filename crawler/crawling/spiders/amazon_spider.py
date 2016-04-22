@@ -112,11 +112,15 @@ class AmazonSpider(JayClusterSpider):
                 self.log("re-yield response.request: %s" % response.request)
                 print("re-yield response.request: %s" % response.request)
                 yield response.request
+                return
         if not len(item_urls) and not response.meta.get("if_next_page"):
             self.crawler.stats.set_failed_download_value(response.meta, "this url is invalid", True)
             self.crawler.stats.set_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
             return
         self.crawler.stats.inc_total_pages(response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'], len(item_urls))
+        workers = response.meta.get('workers', {})
+        for worker in workers.keys():
+            workers[worker] = 0
         for item_url in item_urls:
             yield Request(url=item_url,
                           callback=self.parse_item,
@@ -128,7 +132,6 @@ class AmazonSpider(JayClusterSpider):
             ))
         ]
         response.meta["if_next_page"] = True
-        response.meta.setdefault('workers', {})[self.worker_id] = 0
         for next_page_url in next_page_urls:
             yield Request(url=next_page_url,
                           callback=self.parse,
