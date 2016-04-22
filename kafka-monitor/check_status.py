@@ -26,7 +26,7 @@ def format(d, f=False):
         else:
             print("%s -->  %s"%(k.ljust(22), v))
 
-def main(crawlid, _type="update", path=".", host="192.168.200.58"):
+def main(crawlid, _type="update", path=".", host="192.168.200.90"):
     redis_conn = Redis(host)
     key = "crawlid:%s"%crawlid
     total_pages = int(redis_conn.hget(key, "total_pages") or 0)
