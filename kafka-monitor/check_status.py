@@ -26,7 +26,7 @@ def format(d, f=False):
         else:
             print("%s -->  %s"%(k.ljust(22), v))
 
-def main(crawlid, path=".", _type="update", host="192.168.200.58"):
+def main(crawlid, _type="update", path=".", host="192.168.200.58"):
     redis_conn = Redis(host)
     key = "crawlid:%s"%crawlid
     total_pages = int(redis_conn.hget(key, "total_pages") or 0)
@@ -50,7 +50,7 @@ def main(crawlid, path=".", _type="update", host="192.168.200.58"):
                     format(p, True)
     if (total_pages <= crawled_pages+failed_pages+drop_pages and total_pages != 0) or (total_pages < crawled_pages+failed_pages+drop_pages and total_pages == 0):
         print("finish")
-        print_if = raw_input("generate the failed url file?")
+        print_if = raw_input("generate the failed url file? y/n")
         if print_if == "y":
             print_to_file(redis_conn, crawlid, path, spider_name, _type)
     else:
