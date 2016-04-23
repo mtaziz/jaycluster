@@ -83,7 +83,7 @@ class AmazonSpider(JayClusterSpider):
         if len(robot_checks) > 0:
             self._logger.info("BANNED by amazon.com: %s" % response.request)
             print("BANNED by amazon.com: %s" % response.request)
-            if response.meta.setdefault('workers',{}).setdefault(self.worker_id, 0) >= 3:
+            if response.meta.setdefault('workers',{}).setdefault(self.worker_id, 0) >= self.crawler.settings.get("BANNED_RETRY_TIMES", 100):
                 self.crawler.stats.inc_total_pages(crawlid=response.meta['crawlid'],
                                                    spiderid=response.meta['spiderid'],
                                                    appid=response.meta['appid'])
@@ -147,7 +147,7 @@ class AmazonSpider(JayClusterSpider):
             self._logger.info("BANNED by amazon.com: %s" % response.request)
             # self.log("BANNED by amazon.com: %s" % response.request)
             print("BANNED by amazon.com: %s" % response.request)
-            if item['meta']['workers'][self.worker_id] >= 4:
+            if item['meta']['workers'][self.worker_id] >= self.crawler.settings.get("BANNED_RETRY_TIMES", 101):
                 self.crawler.stats.inc_drop_pages(
                     crawlid=response.meta['crawlid'],
                     spiderid=response.meta['spiderid'],
@@ -218,7 +218,7 @@ class AmazonSpider(JayClusterSpider):
             self._logger.info("Spiderid: %s Crawlid: %s BANNED by amazon.com: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
             print("BANNED by amazon.com: %s" % response.request)
 
-            if item['meta']['workers'][self.worker_id] >= 4:
+            if item['meta']['workers'][self.worker_id] >= self.crawler.settings.get("BANNED_RETRY_TIMES", 101):
                 self.crawler.stats.inc_drop_pages(
                     crawlid=response.meta['crawlid'],
                     spiderid=response.meta['spiderid'],

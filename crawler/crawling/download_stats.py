@@ -1,6 +1,7 @@
 from scrapy.downloadermiddlewares.stats import DownloaderStats
 from scrapy.utils.response import response_httprepr
 from scrapy.utils.response import response_status_message
+from scrapy.conf import settings
 
 class CostomDownloaderStats(DownloaderStats):
 
@@ -17,15 +18,26 @@ class CostomDownloaderStats(DownloaderStats):
                                                    spiderid=request.meta['spiderid'],
                                                    appid=request.meta['appid'])
             self.stats.set_failed_download_value(request.meta, response_status_message(response.status))
-        return response
+        else:
+            return response
 
     def process_exception(self, request, exception, spider):
         ex_class = "%s.%s" % (exception.__class__.__module__, exception.__class__.__name__)
         self.stats.inc_value('downloader/exception_count', spider=spider)
-        request.meta["url"] = request.url
-        if request.meta.get("if_next_page"):
-            self.stats.inc_total_pages(crawlid=request.meta['crawlid'],
-                                               spiderid=request.meta['spiderid'],
-                                               appid=request.meta['appid'])
-        self.stats.set_failed_download_value(request.meta, ex_class)
-        self.stats.inc_value('downloader/exception_type_count/%s' % ex_class, spider=spider)
+        retry_times = settings.get("PROCESSING_EXCEPTION_RETRY_TIMES", 20)
+        times = request.meta.setdefault('exception_retry_times', 0)
+        if times >= retry_times:
+            request.meta["url"] = request.url
+            if request.meta.get("if_next_page"):
+                self.stats.inc_total_pages(crawlid=request.meta['crawlid'],
+                                                   spiderid=request.meta['spiderid'],
+                                                   appid=request.meta['appid'])
+            self.stats.set_failed_download_value(request.meta, ex_class)
+            self.stats.inc_value('downloader/exception_type_count/%s' % ex_class, spider=spider)
+        else:
+            retryreq = request.copy()
+            retryreq.dont_filter = True
+            retryreq.meta["exception_retry_times"] += 1
+            retryreq.meta['priority'] = retryreq.meta['priority'] - 10
+            print(">>>>>>>>>>>>>>>>>>>>>>>>"*10, times)
+            return retryreq
