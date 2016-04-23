@@ -46,7 +46,8 @@ class EastbaySpider(JayClusterSpider):
     @parse_method_wrapper
     def parse(self, response):
         #total_pages=None the porpose is not to init total_page add my msc
-        self.log("EastbaySpider#parse ...")
+        #self.log("EastbaySpider#parse ...")
+        self._logger.info("EastbaySpider#parse ...")
         item_urls = [
             urljoin(response.url, x) for x in list(set(
                 response.xpath('//*[@id="endeca_search_results"]/ul/li/a[1]/@href').extract()
@@ -90,7 +91,8 @@ class EastbaySpider(JayClusterSpider):
         sku_images = {}
         for sku in item.skus():
             url = build_imageset_url(sku)
-            self.log("http get imageset: %s" % url)
+            #self.log("http get imageset: %s" % url)
+            self._logger.info("http get imageset: %s" % url)
             req = urllib2.Request(url)
             try:
                 response_image = urllib2.urlopen(req)

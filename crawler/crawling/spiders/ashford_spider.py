@@ -49,7 +49,8 @@ class AshfordSpider(JayClusterSpider):
 
     @parse_method_wrapper
     def parse_item(self, response):
-        self.log('AshfordSpider#parse_item...')
+        #self.log('AshfordSpider#parse_item...')
+        self._logger.info('AshfordSpider#parse_item...')
         item = AshfordItem()
         sel = Selector(response)
         self._enrich_base_data(item, response, is_update=False)
@@ -77,7 +78,8 @@ class AshfordSpider(JayClusterSpider):
             )
 
     def parse_chinese_detail(self, response):
-        self.log('AshfordSpider#parse_chinese_detail...')
+        #self.log('AshfordSpider#parse_chinese_detail...')
+        self._logger.info('AshfordSpider#parse_chinese_detail...')
         sel = Selector(response)
         item = response.meta['item_half']
         item['chinese_detail'] = format_html_string(''.join(sel.xpath('//div[@id="tab1_info"]').extract()).strip())
@@ -85,7 +87,8 @@ class AshfordSpider(JayClusterSpider):
 
     @parse_method_wrapper
     def parse_item_update(self, response):
-        self.log('AshfordSpider#parse_item_update...')
+        #self.log('AshfordSpider#parse_item_update...')
+        self._logger.info('AshfordSpider#parse_item_update...')
         item = AshfordItem()
         self._enrich_base_data(item, response, is_update=True)
         self._enrich_same_part(item, response)

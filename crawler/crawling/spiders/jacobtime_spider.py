@@ -16,7 +16,8 @@ class JacobtimeSpider(JayClusterSpider):
 
     @parse_method_wrapper
     def parse(self, response):
-        self.log('JacobtimeSpider#parse.........')
+        #self.log('JacobtimeSpider#parse.........')
+        self._logger.info('JacobtimeSpider#parse.........')
         item_urls = [
             urljoin(response.url, x) for x in list(set(
                 response.xpath('//*[@id="content"]//div[@class="product-list"]/div/div[@class="link-block"]/a[2]/@href').extract()
@@ -48,7 +49,7 @@ class JacobtimeSpider(JayClusterSpider):
 
     @parse_method_wrapper
     def parse_item(self, response):
-        self.log('JacobtimeSpider#parse_item...')
+        self._logger.info('JacobtimeSpider#parse_item...')
         item = JacobtimeItem()
         sel = Selector(response)
         self._enrich_base_data(item, response, is_update=False)
@@ -65,7 +66,7 @@ class JacobtimeSpider(JayClusterSpider):
 
     @parse_method_wrapper
     def parse_item_update(self, response):
-        self.log('JacobtimeSpider#parse_item_update...')
+        self._logger.info('JacobtimeSpider#parse_item_update...')
         item = JacobtimeItem()
         self._enrich_base_data(item, response, is_update=True)
         self._enrich_same_part(item, response)

@@ -49,7 +49,7 @@ class MacysSpider(JayClusterSpider):
         #
         # print('job_status_monitor.set_init_value:::::::::',response.meta['crawlid'], response.meta['spiderid'], response.meta['appid'])
 
-        self.log("MacysSpider#parse ...")
+        self._logger.info("MacysSpider#parse ...")
         parts = urlparse(response.url)
         url = "%s://%s/"%(parts.scheme, parts.netloc)
 

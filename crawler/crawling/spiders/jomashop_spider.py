@@ -52,7 +52,7 @@ class JomashopSpider(JayClusterSpider):
 
     @parse_method_wrapper
     def parse_item(self, response):
-        self.log('JomashopSpider#parse_item...')
+        self._logger.info('JomashopSpider#parse_item...')
         item = JomashopItem()
         sel = Selector(response)
         self._enrich_base_data(item, response, is_update=False)
@@ -71,7 +71,7 @@ class JomashopSpider(JayClusterSpider):
 
     @parse_method_wrapper
     def parse_item_update(self, response):
-        self.log('JomashopSpider#parse_item_update...')
+        self._logger.info('JomashopSpider#parse_item_update...')
         item = JomashopItem()
         self._enrich_base_data(item, response, is_update=True)
         self._enrich_same_part(item, response)
