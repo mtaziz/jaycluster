@@ -10,6 +10,7 @@ import datetime
 import traceback
 from functools import wraps
 from scrapy import Item
+from scrapy.conf import settings
 
 VALIDATE_DICT = {"amazon":{"get":['variations_data', 'parent_asin', 'product_specifications', 'product_description', 'color_images', 'variations_data', 'dimensions_display'], "update":['dimensions_display', 'size', 'price', 'list_price', 'price_3p', 'from_price', 'shipping_cost_3p']}}
 REGX_SPIDER_DICT = {"update":{
@@ -38,7 +39,10 @@ def validate_item_wrapper(_type):
                 dump_response_body(REGX_SPIDER_DICT[_type][self.name].search(item["meta"]["url"]).group(1), response.body)
                 self.crawler.stats.inc_invalidate_property_value(item["crawlid"], item["meta"]["appid"], self.name, item["meta"]["url"], e[1])
             return item
-        return wrapper_method
+        if settings.get("VALIDATE_DEBUG", False):
+            return wrapper_method
+        else:
+            return func
     return process_item
 
 def validate(item, name, _type):
