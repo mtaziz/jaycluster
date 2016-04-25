@@ -36,25 +36,28 @@ def main(crawlid, _type="update", path=".", host="192.168.200.90"):
     failed_pages = int(redis_conn.hget(key, "failed_download_pages") or 0)
     drop_pages = int(redis_conn.hget(key, "drop_pages") or 0)
     failed_images = int(redis_conn.hget(key, "failed_download_images") or 0)
+    invalidate_pages = int(redis_conn.hget(key, "invalidate_pages") or 0)
     spider_name = redis_conn.hget(key, "spiderid")
     format(redis_conn.hgetall(key))
-    if drop_pages or failed_pages:
-        print_if = raw_input("show the failed pages(include failed_download_pages and drop_pages)? y/n default n:")
+    if invalidate_pages:
+        print_if = raw_input("show the invalidate pages? y/n default n:")
         if print_if == "y":
-            key = "failed_pages:%s"%crawlid
+            key = "invalidate_pages:%s"%crawlid
             p = redis_conn.hgetall(key)
             format(p, True)
-            if failed_images:
-                print_if = raw_input("show the failed download pages? y/n: default n:")
-                if print_if == "y":
-                    key = "failed_images:%s"%crawlid
-                    p = redis_conn.hgetall(key)
-                    format(p, True)
+        print("check out the debug pages under debug folder")
+        if failed_images:
+            print_if = raw_input("show the failed download images? y/n: default n:")
+            if print_if == "y":
+                key = "failed_images:%s"%crawlid
+                p = redis_conn.hgetall(key)
+                format(p, True)
     if (total_pages <= crawled_pages+failed_pages+drop_pages and total_pages != 0) or (total_pages < crawled_pages+failed_pages+drop_pages and total_pages == 0):
         print("task %s have finished"%crawlid)
-        print_if = raw_input("generate the failed url file? y/n default n:")
-        if print_if == "y":
-            print_to_file(redis_conn, crawlid, path, spider_name, _type)
+        if failed_pages or drop_pages:
+            print_if = raw_input("generate the failed to recycle url file? y/n default n:")
+            if print_if == "y":
+                print_to_file(redis_conn, crawlid, path, spider_name, _type)
     else:
         import datetime
         now = datetime.datetime.now()
@@ -64,9 +67,10 @@ def main(crawlid, _type="update", path=".", host="192.168.200.90"):
             print("task %s haven't finished"%crawlid)
         else:
             print("task %s have finished"%crawlid)
-            print_if = raw_input("generate the failed to recycle url file? y/n default n:")
-            if print_if == "y":
-                print_to_file(redis_conn, crawlid, path, spider_name, _type)
+            if failed_pages or drop_pages:
+                print_if = raw_input("generate the failed to recycle url file? y/n default n:")
+                if print_if == "y":
+                    print_to_file(redis_conn, crawlid, path, spider_name, _type)
 
 def print_to_file(redis_conn, crawlid, path, spider_name, _type):
     url_404_list = []

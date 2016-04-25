@@ -59,5 +59,3 @@ class JayClusterSpider(RedisSpider):
         item['crawlid'] = meta['crawlid']
         item['ts'] = time.strftime("%Y%m%d%H%M%S")
 
-
-

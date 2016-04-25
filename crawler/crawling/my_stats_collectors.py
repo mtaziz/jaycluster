@@ -68,6 +68,14 @@ class MyStatsCollector(MemoryStatsCollector):
             }
         )
 
+    def inc_invalidate_property_value(self, crawlid, appid, spiderid, url, reason):
+        self.redis_conn.hincrby("crawlid:%s" % crawlid, "invalidate_pages", 1)
+        self._set_spiderid_and_appid(crawlid, spiderid, appid)
+        self.set_invalidate_property_pages(crawlid, url, reason)
+
+    def set_invalidate_property_pages(self, crawlid, url, reason):
+        self.redis_conn.hset("invalidate_pages:%s" % crawlid, url, reason)
+
     def set_failed_download_value(self, meta, reason=None, flag=False):
         """
         auto increase failed download pages

@@ -4,7 +4,7 @@ from scrapy.http import Request
 from urlparse import urljoin
 from jay_cluster_spider import JayClusterSpider
 from crawling.items import AmazonItem
-from crawling.utils import format_html_string, safely_json_loads, re_search, dump_response_body, parse_method_wrapper
+from crawling.utils import format_html_string, safely_json_loads, re_search, dump_response_body, parse_method_wrapper, validate_item_wrapper
 from itertools import chain
 import re
 import time
@@ -137,6 +137,7 @@ class AmazonSpider(JayClusterSpider):
                           callback=self.parse,
                           meta=response.meta)
 
+    @validate_item_wrapper("get")
     @parse_method_wrapper
     def parse_item(self, response):
         sel = Selector(response)
@@ -204,6 +205,7 @@ class AmazonSpider(JayClusterSpider):
 
         return item
 
+    @validate_item_wrapper("update")
     @parse_method_wrapper
     def parse_item_update(self, response):
         item = AmazonItem()

@@ -2,6 +2,7 @@ import json
 import sys
 import traceback
 import time
+import datetime
 import importlib
 import uuid
 from docopt import docopt
@@ -155,7 +156,7 @@ class Aria2Dispatcher:
             try:
                 message = consumer.get_message()
                 if message is None:
-                    print(time.time(),' message is None:')
+                    print datetime.datetime().now().strftime("%Y-%m-%d %H:%M:%S"), ' message is None:'
                     logger.info('message is None.')
                     time.sleep(1)
                     continue

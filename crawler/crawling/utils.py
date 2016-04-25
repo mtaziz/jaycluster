@@ -1,4 +1,4 @@
-
+import os
 import re
 import json
 import hashlib
@@ -6,8 +6,48 @@ import socket
 import fcntl
 import struct
 import sys
+import datetime
 import traceback
 from functools import wraps
+from scrapy import Item
+
+VALIDATE_DICT = {"amazon":{"get":['variations_data', 'parent_asin', 'product_specifications', 'product_description', 'color_images', 'variations_data', 'dimensions_display'], "update":['dimensions_display', 'size', 'price', 'list_price', 'price_3p', 'from_price', 'shipping_cost_3p']}}
+REGX_SPIDER_DICT = {
+'amazon':re.compile(r'http://www.amazon.com/gp/product/(.*)/'),
+'eastbay':re.compile(r'http://www.eastbay.com/product/model:(.*)/'),
+'finishline':re.compile(r'http://www.finishline.com/store/catalog/product.jsp?productId=(.*)'),
+'drugstore':re.compile(r'http://www.drugstore.com/products/prod.asp?pid=(.*)'),
+'zappos':re.compile(r'http://www.zappos.com/product/(.*)'),
+'6pm':re.compile(r'http://www.6pm.com/product/(.*)'),
+'ashford':re.compile(r'http://www.ashford.com/us/(.*).pid')
+}
+def validate_item_wrapper(_type):
+    def process_item(func):
+        @wraps(func)
+        def wrapper_method(*args, **kwargs):
+            try:
+                self = args[0]
+                response = args[1]
+                item = func(*args, **kwargs)
+                if isinstance(item, Item):
+                    datum = dict(item)
+                    validate(datum, self.name, _type)
+            except RuntimeError:
+                e = sys.exc_info()
+                self.logger.error(traceback.format_exception(*e))
+                dump_response_body(REGX_SPIDER_DICT[self.name].search(item["meta"]["url"]).group(1), response.body)
+                self.crawler.stats.inc_invalidate_property_value(item["crawlid"], item["meta"]["appid"], self.name, item["meta"]["url"], e[1])
+            return item
+        return wrapper_method
+    return process_item
+
+def validate(item, name, _type):
+    miss_properties = []
+    for property in VALIDATE_DICT[name][_type]:
+        if item.get(property, None) in (None, ""):
+            miss_properties.append(property)
+    if miss_properties:
+        raise RuntimeError("miss property %s"%miss_properties)
 
 def parse_method_wrapper(func):
     @wraps(func)
@@ -101,10 +141,12 @@ def sha1(x):
     return hashlib.sha1(x).hexdigest()
 
 
-def dump_response_body(name_base, response_body):
+def dump_response_body(name_base, response_body, path="debug"):
     '''dump response to a html file.'''
-    file_name = "%s_debug.html" % name_base
-    FILE = open(file_name, 'w')
+    if not os.path.exists(path):
+        os.mkdir(path)
+    file_name = "%s_debug_%s.html" % (name_base, datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
+    FILE = open(os.path.join(path, file_name), 'w')
     FILE.writelines(response_body)
     FILE.close()
 

@@ -3,7 +3,7 @@
 # Define your item pipelines here
 
 import json
-import datetime as dt
+import re
 import sys
 import traceback
 import base64
@@ -12,6 +12,7 @@ from kafka import KafkaClient, SimpleProducer
 from kafka.common import KafkaUnavailableError
 
 from crawling.items import RawResponseItem
+from crawling.utils import dump_response_body
 from scutils.log_factory import LogFactory
 import time
 
@@ -164,7 +165,6 @@ class KafkaPipeline(object):
         if topicName not in self.topic_list:
             self.kafka.ensure_topic_exists(topicName)
             self.topic_list.append(topicName)
-
 
 class LoggingAfterPipeline(object):
 
