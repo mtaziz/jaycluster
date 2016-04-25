@@ -12,7 +12,7 @@ from functools import wraps
 from scrapy import Item
 
 VALIDATE_DICT = {"amazon":{"get":['variations_data', 'parent_asin', 'product_specifications', 'product_description', 'color_images', 'variations_data', 'dimensions_display'], "update":['dimensions_display', 'size', 'price', 'list_price', 'price_3p', 'from_price', 'shipping_cost_3p']}}
-REGX_SPIDER_DICT = {
+REGX_SPIDER_DICT = {"update":{
 'amazon':re.compile(r'http://www.amazon.com/gp/product/(.*)/'),
 'eastbay':re.compile(r'http://www.eastbay.com/product/model:(.*)/'),
 'finishline':re.compile(r'http://www.finishline.com/store/catalog/product.jsp?productId=(.*)'),
@@ -20,7 +20,7 @@ REGX_SPIDER_DICT = {
 'zappos':re.compile(r'http://www.zappos.com/product/(.*)'),
 '6pm':re.compile(r'http://www.6pm.com/product/(.*)'),
 'ashford':re.compile(r'http://www.ashford.com/us/(.*).pid')
-}
+}, "get":{'amazon':re.compile(r'.*/dp/(.*?)/'),}}
 def validate_item_wrapper(_type):
     def process_item(func):
         @wraps(func)
@@ -35,7 +35,7 @@ def validate_item_wrapper(_type):
             except RuntimeError:
                 e = sys.exc_info()
                 self.logger.error(traceback.format_exception(*e))
-                dump_response_body(REGX_SPIDER_DICT[self.name].search(item["meta"]["url"]).group(1), response.body)
+                dump_response_body(REGX_SPIDER_DICT[_type][self.name].search(item["meta"]["url"]).group(1), response.body)
                 self.crawler.stats.inc_invalidate_property_value(item["crawlid"], item["meta"]["appid"], self.name, item["meta"]["url"], e[1])
             return item
         return wrapper_method
