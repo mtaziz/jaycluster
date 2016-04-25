@@ -12,7 +12,8 @@ from functools import wraps
 from scrapy import Item
 from scrapy.conf import settings
 
-VALIDATE_DICT = {"amazon":{"get":['variations_data', 'parent_asin', 'product_specifications', 'product_description', 'color_images', 'variations_data', 'dimensions_display'], "update":['dimensions_display', 'size', 'price', 'list_price', 'price_3p', 'from_price', 'shipping_cost_3p']}}
+VALIDATE_DICT = {"amazon":{"get":['variations_data', 'parent_asin', 'product_specifications', 'product_description', 'color_images', 'variations_data', 'dimensions_display'], "update":['price', 'list_price', 'price_3p']}}
+
 REGX_SPIDER_DICT = {"update":{
 'amazon':re.compile(r'http://www.amazon.com/gp/product/(.*)/'),
 'eastbay':re.compile(r'http://www.eastbay.com/product/model:(.*)/'),
@@ -22,6 +23,10 @@ REGX_SPIDER_DICT = {"update":{
 '6pm':re.compile(r'http://www.6pm.com/product/(.*)'),
 'ashford':re.compile(r'http://www.ashford.com/us/(.*).pid')
 }, "get":{'amazon':re.compile(r'.*/dp/(.*?)/'),}}
+
+VALIDATE_FUNCTION_DICT = {
+                            "amazon":lambda lst, _type, item:_type == "get" and lst or _type == "update" and len(lst) == 3 and item.get("availability") not in ["false"],
+                          }
 def validate_item_wrapper(_type):
     def process_item(func):
         @wraps(func)
@@ -36,8 +41,8 @@ def validate_item_wrapper(_type):
             except RuntimeError:
                 e = sys.exc_info()
                 self.logger.error(traceback.format_exception(*e))
-                dump_response_body(REGX_SPIDER_DICT[_type][self.name].search(item["meta"]["url"]).group(1), response.body)
-                self.crawler.stats.inc_invalidate_property_value(item["crawlid"], item["meta"]["appid"], self.name, item["meta"]["url"], e[1])
+                path = dump_response_body(REGX_SPIDER_DICT[_type][self.name].search(item["meta"]["url"]).group(1), response.body)
+                self.crawler.stats.inc_invalidate_property_value(item["crawlid"], item["meta"]["appid"], self.name, path, e[1])
             return item
         if settings.get("VALIDATE_DEBUG", False):
             return wrapper_method
@@ -50,7 +55,7 @@ def validate(item, name, _type):
     for property in VALIDATE_DICT[name][_type]:
         if item.get(property, None) in (None, ""):
             miss_properties.append(property)
-    if miss_properties:
+    if VALIDATE_FUNCTION_DICT[name](miss_properties, _type, item):
         raise RuntimeError("miss property %s"%miss_properties)
 
 def parse_method_wrapper(func):
@@ -150,9 +155,11 @@ def dump_response_body(name_base, response_body, path="debug"):
     if not os.path.exists(path):
         os.mkdir(path)
     file_name = "%s_debug_%s.html" % (name_base, datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
-    FILE = open(os.path.join(path, file_name), 'w')
+    path = os.path.abspath(os.path.join(path, file_name))
+    FILE = open(path, 'w')
     FILE.writelines(response_body)
     FILE.close()
+    return path
 
 
 def format_html_string(a_string):
