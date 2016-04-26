@@ -490,13 +490,7 @@ class DistributedScheduler(object):
         #self.logger.info('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
 
         if item:
-            # add test by msc
-            new_banned_pages = int(
-                self.redis_conn.hget("crawlid:%s:workerid:%s" % (item["crawlid"], self.spider.worker_id),
-                                     "banned_pages") or 0)
-            if new_banned_pages > self.banned_pages:
-                self.banned_pages = new_banned_pages
-                #time.sleep(5 * random.random())
+
             self.logger.debug("Found url to crawl {url}" \
                     .format(url=item['url']))
             try:
@@ -538,6 +532,13 @@ class DistributedScheduler(object):
                     req.cookies = item['cookie']
                 elif isinstance(item['cookie'], basestring):
                     req.cookies = self.parse_cookie(item['cookie'])
+                # add test by msc
+            new_banned_pages = int(
+                self.redis_conn.hget("crawlid:%s:workerid:%s" % (req.meta["crawlid"], self.spider.worker_id),
+                                     "banned_pages") or 0)
+            if new_banned_pages > self.banned_pages:
+                self.banned_pages = new_banned_pages
+                # time.sleep(5 * random.random())
             return req
 
         return None
