@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import re
 
-VALIDATE_DICT = {"amazon":{"get":['variations_data', 'parent_asin', 'product_specifications', 'product_description', 'color_images', 'variations_data', 'dimensions_display'], "update":['price', 'list_price', 'price_3p']}}
+VALIDATE_DICT = {"amazon":{"get":['variations_data', 'parent_asin', 'color_images', 'variations_data', 'dimensions_display'], "update":['price', 'list_price', 'price_3p']}}
 
 REGX_SPIDER_DICT = {"update":{
 'amazon':re.compile(r'http://www.amazon.com/gp/product/(.*)/'),

@@ -1,5 +1,5 @@
 __author__ = 'Administrator'
-from crawling.spiders import ZapposSpider
+from zappos_spider import ZapposSpider
 
 
 class SixPMSpider(ZapposSpider):

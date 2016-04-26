@@ -39,6 +39,12 @@ def main(crawlid, _type="update", path=".", host="192.168.200.90"):
     invalidate_pages = int(redis_conn.hget(key, "invalidate_pages") or 0)
     spider_name = redis_conn.hget(key, "spiderid")
     format(redis_conn.hgetall(key))
+    if failed_pages:
+        print_if = raw_input("show the failed pages? y/n default n:")
+        if print_if == "y":
+            key = "failed_pages:%s" % crawlid
+            p = redis_conn.hgetall(key)
+            format(p, True)
     if invalidate_pages:
         print_if = raw_input("show the invalidate pages? y/n default n:")
         if print_if == "y":

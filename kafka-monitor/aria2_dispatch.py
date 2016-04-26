@@ -156,7 +156,7 @@ class Aria2Dispatcher:
             try:
                 message = consumer.get_message()
                 if message is None:
-                    print datetime.datetime().now().strftime("%Y-%m-%d %H:%M:%S"), ' message is None:'
+                    print datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ' message is None:'
                     logger.info('message is None.')
                     time.sleep(1)
                     continue
