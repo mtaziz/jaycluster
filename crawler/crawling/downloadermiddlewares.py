@@ -76,6 +76,11 @@ class RandomUserAgentMiddleware(UserAgentMiddleware):
             self.user_agent_list = [ua]
         else:
             self.user_agent_list = filter(lambda x: len(x)>0, [line.strip() for line in user_agent_list.split('\n')])
+        # add by msc
+        self.default_agent = user_agent
+        self.chicer = self.choice()
+        self.user_agent = self.chicer.next() or user_agent
+        self.banned_pages = 0
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -84,11 +89,25 @@ class RandomUserAgentMiddleware(UserAgentMiddleware):
                                 signal=signals.spider_opened)
         return obj
 
-    def process_request(self, request, spider):
-        user_agent = random.choice(self.user_agent_list)
+    # add by msc
+    def choice(self):
+        while True:
+            if self.user_agent_list:
+                for user_agent in self.user_agent_list:
+                    yield  user_agent
+            else:
+                yield None
 
-        if user_agent:
-            request.headers.setdefault('User-Agent', user_agent)
+
+    def process_request(self, request, spider):
+        #user_agent = random.choice(self.user_agent_list)
+        # add by msc
+        new_banned_pages = int(spider.redis_conn.hget("crawlid:%s:workerid:%s"%(request.meta["crawlid"], spider.worker_id), "banned_pages")  or 0)
+        if new_banned_pages > self.banned_pages:
+            self.banned_pages = new_banned_pages
+            self.user_agent = self.chicer.next() or self.default_agent
+        if self.user_agent:
+            request.headers.setdefault('User-Agent', self.user_agent)
             self.logger.debug('User-Agent: {} {}'.format(request.headers.get('User-Agent'), request))
         else:
             self.logger.error('User-Agent: ERROR with user agent list')

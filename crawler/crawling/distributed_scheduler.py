@@ -19,7 +19,8 @@ from kazoo.handlers.threading import KazooTimeoutError
 
 from scutils.zookeeper_watcher import ZookeeperWatcher
 from scutils.redis_queue import RedisPriorityQueue
-from scutils.redis_throttled_queue import RedisThrottledQueue
+from  random_redis_throttled_queue import  RandomRedisThrottledQueue as RedisThrottledQueue
+#from scutils.redis_throttled_queue import RedisThrottledQueue
 from scutils.log_factory import LogFactory
 from crawling.utils import get_method, next_request_method_wrapper
 from utils import get_raspberrypi_ip_address
@@ -92,6 +93,8 @@ class DistributedScheduler(object):
         self.my_uuid = str(uuid.uuid4()).split('-')[4]
         # wrapper next_request
         self.next_request = next_request_method_wrapper(self)(self.next_request)
+        # add test by msc
+        self.banned_pages = 0
 
     def setup_zookeeper(self):
         self.assign_path = settings.get('ZOOKEEPER_ASSIGN_PATH', "")
@@ -465,8 +468,6 @@ class DistributedScheduler(object):
         different queues
         '''
 
-
-
         t = time.time()
         # update the redis queues every so often
 
@@ -484,10 +485,18 @@ class DistributedScheduler(object):
         #     self.report_self()
         #     print('after   self.report_self()')
         item = self.find_item()
+
         print('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
         #self.logger.info('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
 
         if item:
+            # add test by msc
+            new_banned_pages = int(
+                self.redis_conn.hget("crawlid:%s:workerid:%s" % (item["crawlid"], self.spider.worker_id),
+                                     "banned_pages") or 0)
+            if new_banned_pages > self.banned_pages:
+                self.banned_pages = new_banned_pages
+                #time.sleep(5 * random.random())
             self.logger.debug("Found url to crawl {url}" \
                     .format(url=item['url']))
             try:
