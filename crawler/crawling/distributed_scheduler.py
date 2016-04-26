@@ -486,14 +486,21 @@ class DistributedScheduler(object):
         #     print('after   self.report_self()')
          # add test by msc
         if self.spider.name == "amazon":
+            banned_key = "banned:key:%s"%self.spider.worker_id
+            now = time.time()
+            self.redis_conn.zremrangebyscore(banned_key, '-inf', now-self.window)
             keys = self.redis_conn.keys("crawlid:*:workerid:%s" % self.spider.worker_id)
             new_banned_pages = 0
             for key in keys:
                 new_banned_pages += int(self.redis_conn.hget(key, "banned_pages") or 0)
             if self.banned_pages == 0:
+                print(">>>>>>>>>>>>>>>>>>", "self.banned_pages:%s, new_banned_pages:%s"%(self.banned_pages, new_banned_pages))
                 self.banned_pages = new_banned_pages
             if new_banned_pages >  self.banned_pages:
                 self.banned_pages = new_banned_pages
+                print(">>>>>>>>>>>>>>>>>>","self.banned_pages:%s, new_banned_pages:%s" %(self.banned_pages, new_banned_pages))
+                self.redis_conn.zadd(banned_key, now, now)
+            if self.redis_conn.zcard(banned_key) > self.hits - 1:
                 time.sleep(1201)
 
         item = self.find_item()
