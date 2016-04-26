@@ -494,13 +494,12 @@ class DistributedScheduler(object):
             for key in keys:
                 new_banned_pages += int(self.redis_conn.hget(key, "banned_pages") or 0)
             if self.banned_pages == 0:
-                print(">>>>>>>>>>>>>>>>>>", "self.banned_pages:%s, new_banned_pages:%s"%(self.banned_pages, new_banned_pages))
                 self.banned_pages = new_banned_pages
             if new_banned_pages >  self.banned_pages:
                 self.banned_pages = new_banned_pages
-                print(">>>>>>>>>>>>>>>>>>","self.banned_pages:%s, new_banned_pages:%s" %(self.banned_pages, new_banned_pages))
                 self.redis_conn.zadd(banned_key, now, now)
             if self.redis_conn.zcard(banned_key) > self.hits - 1:
+                self.logger.debug("%s sleep 20 minutes"%self.spider.worker_id)
                 time.sleep(1201)
 
         item = self.find_item()
