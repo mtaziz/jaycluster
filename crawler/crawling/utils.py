@@ -1,3 +1,4 @@
+from scrapy.http import Request
 import os
 import json
 import hashlib
@@ -83,7 +84,7 @@ def next_request_method_wrapper(self):
                 e = sys.exc_info()
                 msg = "error heppened in %s method. Error:%s"%(func.__name__, traceback.format_exception(*e))
                 self.logger.info(msg)
-                self.spider.crawler.stats.set_failed_download_value(self.present_item, str(e[1]))
+                self.spider.crawler.stats.set_failed_download_value(self.present_item if not isinstance(self.present_item, Request) else self.present_item["meta"], str(e[1]))
         return wrapper_method
     return wrapper
 

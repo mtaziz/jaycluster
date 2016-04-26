@@ -484,19 +484,25 @@ class DistributedScheduler(object):
         #     print('after    self.update_ipaddress()')
         #     self.report_self()
         #     print('after   self.report_self()')
+         # add test by msc
+        if self.spider.name == "amazon":
+            keys = self.redis_conn.keys("crawlid:*:workerid:%s" % self.spider.worker_id)
+            new_banned_pages = 0
+            for key in keys:
+                new_banned_pages += int(self.redis_conn.hget(key, "banned_pages") or 0)
+            if self.banned_pages == 0:
+                self.banned_pages = new_banned_pages
+            if new_banned_pages >  self.banned_pages:
+                self.banned_pages = new_banned_pages
+                time.sleep(1201)
+
         item = self.find_item()
 
         print('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
         #self.logger.info('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
 
         if item:
-            # add test by msc
-            new_banned_pages = int(
-                self.redis_conn.hget("crawlid:%s:workerid:%s" % (item["crawlid"], self.spider.worker_id),
-                                     "banned_pages") or 0)
-            if new_banned_pages > self.banned_pages:
-                self.banned_pages = new_banned_pages
-                #time.sleep(5 * random.random())
+
             self.logger.debug("Found url to crawl {url}" \
                     .format(url=item['url']))
             try:
