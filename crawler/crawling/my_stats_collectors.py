@@ -12,7 +12,7 @@ class RedisDict(dict):
         self.redis_conn.delete(self.worker_id)
 
     def __getitem__(self, key):
-        return get(key)
+        return self.get(key)
 
     def __setitem__(self, key, value):
         self.keys.add(key)

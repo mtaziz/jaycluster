@@ -53,7 +53,7 @@ def parse_method_wrapper(func):
             self = args[0]
             response = args[1]
             msg = "error heppened in %s method. Error:%s"%(func.__name__, traceback.format_exception(*e))
-            self.log(msg)
+            self._logger(msg)
             self.crawler.stats.set_failed_download_value(response.meta, str(e[1]))
     return wrapper_method
 
