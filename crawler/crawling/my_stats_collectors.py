@@ -131,7 +131,7 @@ class MyStatsCollector(MemoryStatsCollector):
         msg["spiderid"] = spiderid
         msg["crawlid"] = crawlid
         msg["total_pages"] = int(self.redis_conn.hget(crawlid,"total_pages") or 0)
-        self.crawler.spider.logger.info(msg)
+        self.crawler.spider._logger.info(msg)
         print msg
 
     def set_total_pages(self, crawlid, spiderid, appid, num=1):
@@ -143,7 +143,7 @@ class MyStatsCollector(MemoryStatsCollector):
         msgdict["msg"]["crawlid"] = crawlid
         msgdict["msg"]["total_pages"] = int(self.redis_conn.hget(crawlid, "total_pages") or 0)
 
-        self.crawler.spider.logger.info(msgdict)
+        self.crawler.spider._logger.info(msgdict)
         print msgdict
 
 
@@ -152,13 +152,13 @@ class MyStatsCollector(MemoryStatsCollector):
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
         self.inc_crawled_pages_one_worker(crawlid=crawlid, workerid=self.crawler.spider.worker_id)
 
-        msgdict = {}
-        msgdict["WORKER_CRAWLED_MESSAGE"]["spiderid"] = spiderid
-        msgdict["WORKER_CRAWLED_MESSAGE"]["crawlid"] = crawlid
-        msgdict["WORKER_CRAWLED_MESSAGE"]["workerid"] = self.crawler.spider.worker_id
-        msgdict["WORKER_CRAWLED_MESSAGE"]["workerid_status"] = self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id)
+        #msgvalue= {"spiderid":spiderid,"crawlid":crawlid,"workerid":self.crawler.spider.worker_id,"workerid_status":self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id)}
+        msgvalue= {"spiderid":spiderid,"crawlid":crawlid,"workerid":self.crawler.spider.worker_id}
+        msgvalue.update(self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id))
+        msgdict = {"CrawMsg":msgvalue}
+        msg = "WORKER_CRAWLED_MESSAGE"
 
-        self.crawler.spider.logger.info(msgdict)
+        self.crawler.spider._logger.info(msg,msgdict)
         # self.crawler.spider._logger.info("WORKER_CRAWLED_MESSAGE: {crawlid:%s,workerid:%s, %s }" % (
         #     crawlid,
         #     self.crawler.spider.worker_id,
@@ -181,18 +181,13 @@ class MyStatsCollector(MemoryStatsCollector):
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
         self.inc_banned_pages_one_worker(crawlid=crawlid, workerid=self.crawler.spider.worker_id)
 
-        msgdict = {}
-        msgdict["WORKER_BANNED_MESSAGE"]["spiderid"] = spiderid
-        msgdict["WORKER_BANNED_MESSAGE"]["crawlid"] = crawlid
-        msgdict["WORKER_BANNED_MESSAGE"]["workerid"] = self.crawler.spider.worker_id
-        msgdict["WORKER_BANNED_MESSAGE"]["workerid_status"] = self.get_all_status_value_one_worker(crawlid,self.crawler.spider.worker_id)
+        #msgvalue= {"spiderid":spiderid,"crawlid":crawlid,"workerid":self.crawler.spider.worker_id,"workerid_status":self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id)}
+        msgvalue= {"spiderid":spiderid,"crawlid":crawlid,"workerid":self.crawler.spider.worker_id}
+        msgvalue.update(self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id))
+        msgdict = {"BanMes":msgvalue}
+        msg = "WORKER_BANNED_MESSAGE"
+        self.crawler.spider._logger.info(msg,msgdict)
 
-        self.crawler.spider.logger.info(msgdict)
-
-        # self.crawler.spider.logger.info("WORKER_BANNED_MESSAGE: {crawlid:%s,workerid:%s, %s }" % (
-        #     crawlid,
-        #     self.crawler.spider.worker_id,
-        #     self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id)))
 
     def inc_banned_pages_one_worker(self, crawlid, workerid):
         self.redis_conn.hincrby("crawlid:%s:workerid:%s" % (crawlid, workerid), "banned_pages", 1)
@@ -201,7 +196,12 @@ class MyStatsCollector(MemoryStatsCollector):
         return self.redis_conn.hgetall("crawlid:%s" % crawlid)
 
     def get_all_status_value_one_worker(self, crawlid, workerid):
-        return self.redis_conn.hgetall("crawlid:%s:workerid:%s" % (crawlid, workerid))
+        valuedict = self.redis_conn.hgetall("crawlid:%s:workerid:%s" % (crawlid, workerid))
+        for key in valuedict:
+            valuedict[key] = int(valuedict[key] or 0)
+        valuedict["banpercent"] = "%.2f" % (float(valuedict["banned_pages"] * 100)/float(valuedict["crawled_pages"] + valuedict["banned_pages"]+1))
+        return valuedict
+        #return self.redis_conn.hgetall("crawlid:%s:workerid:%s" % (crawlid, workerid))
 
 
 
