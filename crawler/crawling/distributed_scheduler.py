@@ -6,7 +6,6 @@ import random
 import time
 import tldextract
 import urllib2
-import re
 import yaml
 import sys
 import uuid
@@ -19,11 +18,11 @@ from kazoo.handlers.threading import KazooTimeoutError
 
 from scutils.zookeeper_watcher import ZookeeperWatcher
 from scutils.redis_queue import RedisPriorityQueue
-from  random_redis_throttled_queue import  RandomRedisThrottledQueue as RedisThrottledQueue
+# add by msc
+from random_redis_throttled_queue import  RandomRedisThrottledQueue as RedisThrottledQueue
 #from scutils.redis_throttled_queue import RedisThrottledQueue
 from scutils.log_factory import LogFactory
-from crawling.utils import get_method, next_request_method_wrapper
-from utils import get_raspberrypi_ip_address
+from utils import get_method, next_request_method_wrapper, get_raspberrypi_ip_address, RedisDict
 
 try:
     import cPickle as pickle
@@ -344,6 +343,9 @@ class DistributedScheduler(object):
         self.dupefilter = RFPDupeFilter(self.redis_conn,
                                         self.spider.name + ':dupefilter',
                                         self.rfp_timeout)
+        # add by msc
+        if self.spider.name == "amazon":
+            self.count_per_minute = RedisDict(self.redis_conn, None, "%s_%s:count_per_minute"%(self.spider.name, self.spider.worker_id))
 
     def close(self, reason):
         self.logger.info("Closing Spider", {'spiderid':self.spider.name})
@@ -498,7 +500,11 @@ class DistributedScheduler(object):
             if new_banned_pages >  self.banned_pages:
                 self.banned_pages = new_banned_pages
                 self.redis_conn.zadd(banned_key, now, now)
-            if self.redis_conn.zcard(banned_key) > int(self.hits * settings.get("SLEEP_STANDARD", 0.95)):
+            banned_per_minute = self.redis_conn.zcard(banned_key)
+            key = datetime.datetime.now().strftime("%Y%m%d%H%M")
+            self.count_per_minute[key] = banned_per_minute
+            self.logger.debug("banned_per_minute: %s. "%banned_per_minute)
+            if banned_per_minute > int(self.hits * settings.get("SLEEP_STANDARD", 0.95)):
                 self.logger.debug("%s sleep %s minutes"%(self.spider.worker_id, settings.get("SLEEP_MINUTES", 20)))
                 time.sleep((settings.get("SLEEP_MINUTES", 20)+1)*60)
 
