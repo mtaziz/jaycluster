@@ -498,9 +498,9 @@ class DistributedScheduler(object):
             if new_banned_pages >  self.banned_pages:
                 self.banned_pages = new_banned_pages
                 self.redis_conn.zadd(banned_key, now, now)
-            if self.redis_conn.zcard(banned_key) > int(self.hits *0.95):
-                self.logger.debug("%s sleep 20 minutes"%self.spider.worker_id)
-                time.sleep(1201)
+            if self.redis_conn.zcard(banned_key) > int(self.hits * settings.get("SLEEP_STANDARD", 0.95)):
+                self.logger.debug("%s sleep %s minutes"%(self.spider.worker_id, settings.get("SLEEP_MINUTES", 20)))
+                time.sleep(settings.get("SLEEP_MINUTES", 20)*60)
 
         item = self.find_item()
 
