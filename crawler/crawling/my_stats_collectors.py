@@ -1,45 +1,9 @@
 ﻿# -*- coding:utf-8 -*-
 from scrapy.statscollectors import MemoryStatsCollector
-import redis, pickle, time, socket
-from crawling.utils import get_raspberrypi_ip_address
-from scutils.log_factory import LogFactory
 
-class RedisDict(dict):
-    keys = None
-    def __init__(self, redis_conn, crawler):
-        self.redis_conn = redis_conn
-        self.keys = set()
-        self.worker_id = ("%s:%s_%s:stats" % (crawler.spidercls.__name__, socket.gethostname(), get_raspberrypi_ip_address())).replace('.', '-')
-        self.redis_conn.delete(self.worker_id)
-
-    def __getitem__(self, key):
-        return self.get(key)
-
-    def __setitem__(self, key, value):
-        self.keys.add(key)
-        self.redis_conn.hset(self.worker_id, key, pickle.dumps(value))
-
-    def get(self, key, default=None):
-        k = self.redis_conn.hget(self.worker_id, key)
-        return pickle.loads(k) if k else default
-
-    def setdefault(self, key, default=None):
-        d = self.get(key, default)
-        if d == default:
-            self[key] = default
-        return d
-
-    def __str__(self):
-        sub = "{\n"
-        for key in self.keys:
-            sub += "\t%s:%s, \n"%(key, self.get(key, 0))
-        return sub[:-3]+"\n}"
-
-    def clear(self):
-        self.redis_conn.delete(self.worker_id)
-        self.keys.clear()
-
-    __repr__  = __str__
+import redis
+import time
+from utils import RedisDict
 
 class MyStatsCollector(MemoryStatsCollector):
     """

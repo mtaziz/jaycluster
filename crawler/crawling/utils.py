@@ -8,6 +8,7 @@ import struct
 import sys
 import datetime
 import traceback
+import pickle
 from functools import wraps
 from scrapy import Item
 from scrapy.conf import settings
@@ -105,6 +106,46 @@ def pipline_method_wrapper(func):
         spider.crawler.stats.set_failed_download_value(item.meta, str(e[1]))
         return item
     return wrapper_method
+
+class RedisDict(dict):
+    keys = None
+    def __init__(self, redis_conn, crawler, primary_key=None):
+        self.redis_conn = redis_conn
+        self.keys = set()
+        self.worker_id = primary_key if primary_key else ("%s:%s_%s:stats" % (crawler.spidercls.name, socket.gethostname(), get_raspberrypi_ip_address())).replace('.', '-')
+        self.redis_conn.delete(self.worker_id)
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __setitem__(self, key, value):
+        self.keys.add(key)
+        self.redis_conn.hset(self.worker_id, key, pickle.dumps(value))
+
+    def get(self, key, default=None):
+        k = self.redis_conn.hget(self.worker_id, key)
+        return pickle.loads(k) if k else default
+
+    def setdefault(self, key, default=None):
+        d = self.get(key, default)
+        if d == default:
+            self[key] = default
+        return d
+
+    def __str__(self):
+        sub = "{\n"
+        for key in self.keys:
+            sub += "\t%s:%s, \n"%(key, self.get(key, 0))
+        return sub[:-3]+"\n}"
+
+    def set_key(self, key):
+        self.worker_id = key
+
+    def clear(self):
+        self.redis_conn.delete(self.worker_id)
+        self.keys.clear()
+
+    __repr__  = __str__
 
 def _get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

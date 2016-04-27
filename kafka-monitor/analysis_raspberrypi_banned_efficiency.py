@@ -11,11 +11,11 @@ def analysis(crawlid, host="192.168.200.90"):
     for key in keys:
         crawled = float(redis_conn.hget(key, "crawled_pages")) or 0.0
         banned = float(redis_conn.hget(key, "banned_pages")) or 0.0
-        print key[-7:-4], ">>>>",  "%.2f%%"%(crawled*100/(crawled+banned))
+        print key[-7:-4], "\t",  "%.2f%%"%(crawled*100/(crawled+banned))
     print("抓取成功与各自份额之比\n")
     for key in keys:
         crawled = float(redis_conn.hget(key, "crawled_pages")) or 0.0
-        print key[-7:-4], ">>>>", "%.2f%%"%(crawled*100/total_pages*len(keys))
+        print key[-7:-4], "\t", "%.2f%%"%(crawled*100/total_pages*len(keys))
 
 
 if __name__ == "__main__":
