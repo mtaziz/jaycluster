@@ -29,7 +29,7 @@ def validate_item_wrapper(_type):
                 e = sys.exc_info()
                 self.logger.error(traceback.format_exception(*e))
                 path = dump_response_body(REGX_SPIDER_DICT[_type][self.name].search(item["meta"]["url"]).group(1), response.body)
-                self.crawler.stats.inc_invalidate_property_value(item["crawlid"], item["meta"]["appid"], self.name, path, e[1])
+                self.crawler.stats.inc_invalidate_property_value(item["crawlid"], item["meta"]["appid"], self.name, path, "%s:%s"%(e[0].__name__, e[1]))
             return item
         if settings.get("VALIDATE_DEBUG", False):
             return wrapper_method
@@ -56,7 +56,7 @@ def parse_method_wrapper(func):
             response = args[1]
             msg = "error heppened in %s method. Error:%s"%(func.__name__, traceback.format_exception(*e))
             self._logger.info(msg)
-            self.crawler.stats.set_failed_download_value(response.meta, str(e[1]))
+            self.crawler.stats.set_failed_download_value(response.meta, "%s:%s heppened in %s"%(e[0].__name__, e[1], func.__name__))
     return wrapper_method
 
 def parse_image_method_wrapper(func):
@@ -71,7 +71,7 @@ def parse_image_method_wrapper(func):
             msg = "error heppened in %s method. Error:%s"%(func.__name__, traceback.format_exception(*e))
             self.log(msg)
             item = response.meta.get("item-half", {})
-            self.crawler.stats.set_failed_download_images(response.meta, "%s product_Id:%s"%(str(e[1]), item.get('product_id')))
+            self.crawler.stats.set_failed_download_images(response.meta, "%s product_Id:%s"%("%s:%s heppened in %s"%(e[0].__name__, e[1], func.__name__), item.get('product_id')))
             return item
     return wrapper_method
 
@@ -85,7 +85,8 @@ def next_request_method_wrapper(self):
                 e = sys.exc_info()
                 msg = "error heppened in %s method. Error:%s"%(func.__name__, traceback.format_exception(*e))
                 self.logger.info(msg)
-                self.spider.crawler.stats.set_failed_download_value(self.present_item if not isinstance(self.present_item, Request) else self.present_item["meta"], str(e[1]))
+                if self.present_item:
+                    self.spider.crawler.stats.set_failed_download_value(self.present_item if not isinstance(self.present_item, Request) else self.present_item["meta"], "%s:%s heppened in %s"%(e[0].__name__, e[1], func.__name__))
         return wrapper_method
     return wrapper
 
@@ -103,7 +104,7 @@ def pipline_method_wrapper(func):
                 spider.log("error heppened in %s method. Error:%s, processing %s,"%(func.__name__, traceback.format_exception(*e), str(item)))
                 #spider.crawler.stats.set_failed_download_value(response.meta, str(e[1]))
                 continue
-        spider.crawler.stats.set_failed_download_value(item.meta, str(e[1]))
+        spider.crawler.stats.set_failed_download_value(item.meta, str(e))
         return item
     return wrapper_method
 

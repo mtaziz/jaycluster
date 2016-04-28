@@ -162,8 +162,8 @@ class MyStatsCollector(MemoryStatsCollector):
     def get_all_status_value_one_worker(self, crawlid, workerid):
         valuedict = self.redis_conn.hgetall("crawlid:%s:workerid:%s" % (crawlid, workerid))
         for key in valuedict:
-            valuedict[key] = int(valuedict[key] or 0)
-        valuedict["banpercent"] = "%.2f" % (float(valuedict["banned_pages"] * 100)/float(valuedict["crawled_pages"] + valuedict["banned_pages"]+1))
+            valuedict[key] = int(valuedict.get(key, 0) )
+        valuedict["banpercent"] = "%.2f" % (valuedict.get("banned_pages", 0) * 100.0/(valuedict.get("crawled_pages", 0) + valuedict.get("banned_pages", 0)+1))
         return valuedict
         #return self.redis_conn.hgetall("crawlid:%s:workerid:%s" % (crawlid, workerid))
 
