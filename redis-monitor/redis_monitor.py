@@ -41,7 +41,8 @@ class RedisMonitor:
         my_output = not log_file if log_file else self.settings['LOG_STDOUT']
         my_json = json if json else self.settings['LOG_JSON']
         self.logger = LogFactory.get_instance(json=my_json,
-                                              stdout=my_output, level=my_level,
+                                              stdout=my_output,
+                                              level=my_level,
                                               name=self.settings['LOGGER_NAME'],
                                               dir=self.settings['LOG_DIR'],
                                               file=self.settings['LOG_FILE'],
@@ -117,6 +118,7 @@ class RedisMonitor:
         The internal while true main loop for the redis monitor
         '''
         self.logger.debug("Running main loop")
+        print 'Running main loop'
         old_time = 0
         while True:
             for plugin_key in self.plugins_dict:
@@ -204,12 +206,14 @@ class RedisMonitor:
                                 key='{k}:{t}'.format(k=temp_key1, t=time),
                                 window=time,
                                 cycle_time=self.settings['STATS_CYCLE'])
+
                 self.stats_dict['fail'][time] = StatsCollector \
                         .get_rolling_time_window(
                                 redis_conn=self.redis_conn,
                                 key='{k}:{t}'.format(k=temp_key2, t=time),
                                 window=time,
                                 cycle_time=self.settings['STATS_CYCLE'])
+
                 self.logger.debug("Set up total/fail Stats Collector '{i}'"\
                         .format(i=item))
             except AttributeError as e:
