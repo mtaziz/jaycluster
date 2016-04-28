@@ -498,8 +498,12 @@ class DistributedScheduler(object):
             if self.banned_pages == 0:
                 self.banned_pages = new_banned_pages
             if new_banned_pages >  self.banned_pages:
+                diff = new_banned_pages - self.banned_pages
                 self.banned_pages = new_banned_pages
-                self.redis_conn.zadd(banned_key, now, now)
+                a = {}
+                for i in range(diff):
+                    a.update({now+i/10.0:now+i/10.0})
+                self.redis_conn.zadd(banned_key, **a)
             banned_per_minute = self.redis_conn.zcard(banned_key)
             key = datetime.datetime.now().strftime("%Y%m%d%H%M")
             self.count_per_minute[key] = banned_per_minute
