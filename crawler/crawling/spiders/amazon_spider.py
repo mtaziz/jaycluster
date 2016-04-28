@@ -67,7 +67,7 @@ def get_the_largest_one_from_images(images):
 class AmazonSpider(JayClusterSpider):
 
     name = "amazon"
-
+    website_possible_httpstatus_list = [404, 301, 302, 303, 307, 500, 502, 503, 504, 400, 408]
     def __init__(self, *args, **kwargs):
         super(AmazonSpider, self).__init__(*args, **kwargs)
 
@@ -234,6 +234,7 @@ class AmazonSpider(JayClusterSpider):
                 print("drop response.request: %s" % response.request)
                 return
             else:
+                response.request.meta["change_proxy"] = True
                 self.crawler.stats.inc_banned_pages(
                     crawlid=response.meta['crawlid'],
                     spiderid=response.meta['spiderid'],

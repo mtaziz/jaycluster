@@ -3,9 +3,9 @@ from redis import Redis
 from bottle import template
 from bottle import route, run
 import pickle
-redis_conn = Redis("192.168.200.90")
+redis_conn = Redis("192.168.200.58")
 keys = "amazon_*:count_per_minute"
-key_pattern = "amazon_dev_192-168-%s-160:count_per_minute"
+key_pattern = "amazon_dev_192-168-200-%s:count_per_minute"
 
 tem = """<html>
             <head><titile></title>
@@ -16,7 +16,7 @@ tem = """<html>
                                 $(".list").each(function(){
                                     that = $(this);
                                     $.ajax({
-                                        url:"/pi/"+/amazon_(?:\w+)_192-168-(\d+)-(?:\d+)/.exec($(this).attr("id"))[1],
+                                        url:"/pi/"+/amazon_(?:\w+)_192-168-(?:\d+)-(\d+)/.exec($(this).attr("id"))[1],
                                         success:succed,
                                         error:errored
                                     })
@@ -46,7 +46,7 @@ tem = """<html>
                         function flash(){
                             var time = getDate()
                             $.ajax({
-                                url:"/pi/"+/amazon_(?:\w+)_192-168-(\d+)-(?:\d+)/.exec(that.attr("id"))[1]+"/"+time,
+                                url:"/pi/"+/amazon_(?:\w+)_192-168-(?:\d+)-(\d+)/.exec(that.attr("id"))[1]+"/"+time,
                                 success:succed,
                                 error:errored
                             })

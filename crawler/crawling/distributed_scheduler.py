@@ -508,6 +508,7 @@ class DistributedScheduler(object):
             key = datetime.datetime.now().strftime("%Y%m%d%H%M")
             self.count_per_minute[key] = banned_per_minute
             self.logger.debug("banned_per_minute: %s. "%banned_per_minute)
+            print ">>>>>>>>>>>>", self.hits * settings.get("SLEEP_STANDARD", 0.95), banned_per_minute
             if banned_per_minute > int(self.hits * settings.get("SLEEP_STANDARD", 0.95)):
                 self.logger.debug("%s sleep %s minutes"%(self.spider.worker_id, settings.get("SLEEP_MINUTES", 20)))
                 time.sleep((settings.get("SLEEP_MINUTES", 20)+1)*60)

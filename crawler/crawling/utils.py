@@ -69,7 +69,7 @@ def parse_image_method_wrapper(func):
             self = args[0]
             response = args[1]
             msg = "error heppened in %s method. Error:%s"%(func.__name__, traceback.format_exception(*e))
-            self.log(msg)
+            self._logger.info(msg)
             item = response.meta.get("item-half", {})
             self.crawler.stats.set_failed_download_images(response.meta, "%s product_Id:%s"%("%s:%s heppened in %s"%(e[0].__name__, e[1], func.__name__), item.get('product_id')))
             return item
