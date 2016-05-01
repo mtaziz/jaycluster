@@ -301,6 +301,7 @@ class AmazonSpider(JayClusterSpider):
             item['price'] = ''.join([
                 ''.join(sel.xpath('//span[@id="priceblock_ourprice"]/text()').extract()).strip(),
                 ''.join(sel.xpath('//span[@id="priceblock_saleprice"]/text()').extract()).strip(),
+                ''.join(sel.xpath('//span[@id="priceblock_dealprice"]/text()').extract()).strip(),
                 ''.join(sel.xpath('//span[@id="actualPriceValue"]/b/text()').extract()).strip()
                 ])
 
