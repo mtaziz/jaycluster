@@ -1,7 +1,7 @@
 from scrapy.downloadermiddlewares.stats import DownloaderStats
 from scrapy.utils.response import response_httprepr
-from scrapy.utils.response import response_status_message
 from scrapy.conf import settings
+import twisted
 
 class CostomDownloaderStats(DownloaderStats):
 
@@ -34,9 +34,3 @@ class CostomDownloaderStats(DownloaderStats):
                                                    appid=request.meta['appid'])
             self.stats.set_failed_download_value(request.meta, ex_class)
             self.stats.inc_value('downloader/exception_type_count/%s' % ex_class, spider=spider)
-        else:
-            retryreq = request.copy()
-            retryreq.dont_filter = True
-            retryreq.meta["exception_retry_times"] += 1
-            retryreq.meta['priority'] = retryreq.meta['priority'] - 10
-            return retryreq

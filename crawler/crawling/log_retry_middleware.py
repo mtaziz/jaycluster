@@ -1,4 +1,5 @@
-import logging
+import sys
+import traceback
 import redis
 import socket
 import time
@@ -79,17 +80,20 @@ class LogRetryMiddleware(object):
             self._increment_504_stat(request)
 
     def _log_retry(self, request, exception, spider):
-        extras = {}
-        extras['logger'] = self.logger.name
-        extras['error_request'] = request
-        extras['error_reason'] = exception
-        extras['retry_count'] = request.meta.get('retry_times', 0)
-        extras['status_code'] = 504
-        extras['appid'] = request.meta['appid']
-        extras['crawlid'] = request.meta['crawlid']
-        extras['url'] = request.url
+        try:
+            extras = {}
+            extras['logger'] = self.logger.name
+            extras['error_request'] = request
+            extras['error_reason'] = exception
+            extras['retry_count'] = request.meta.get('retry_times', 0)
+            extras['status_code'] = 504
+            extras['appid'] = request.meta['appid']
+            extras['crawlid'] = request.meta['crawlid']
+            extras['url'] = request.url
 
-        self.logger.error('Scraper Retry', extra=extras)
+            self.logger.error('Scraper Retry', extra=extras)
+        except:
+            self.logger.error(traceback.format_exception(*sys.exc_info()))
 
     def _setup_stats_status_codes(self):
         '''

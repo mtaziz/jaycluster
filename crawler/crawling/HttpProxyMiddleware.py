@@ -7,12 +7,13 @@ from twisted.internet.error import TimeoutError, ConnectionRefusedError, Connect
 import fetch_free_proxyes
 from scutils.log_factory import LogFactory
 from utils import get_raspberrypi_ip_address
+from random import shuffle
 
 
 
 class HttpProxyMiddleware(object):
     # 遇到这些类型的错误直接当做代理不可用处理掉, 不再传给retrymiddleware
-    DONT_RETRY_ERRORS = (TimeoutError, ConnectionRefusedError, ResponseNeverReceived, ConnectError, ValueError)
+    DONT_RETRY_ERRORS = (TimeoutError, ConnectionRefusedError, ResponseNeverReceived, ConnectError, ValueError, TypeError)
     
     def __init__(self, settings):
         # 保存上次不用代理直接连接的时间点
@@ -30,8 +31,9 @@ class HttpProxyMiddleware(object):
         # 如果这个数过小, 例如两个, 爬虫用A ip爬了没几个就被ban, 换了一个又爬了没几次就被ban, 这样整个爬虫就会处于一种忙等待的状态, 影响效率
         self.extend_proxy_threshold = 10
         # 初始化代理列表
-        self.proxyes = [{"proxy": None, "valid": True, "count": 0}, {"proxy": "http://10.10.2.58:6666", "valid": True, "count": 0},
-                        {"proxy": "http://10.110.93.95:8088", "valid": True, "count": 0}]
+        #self.proxyes = [{"proxy": None, "valid": True, "count": 0}, {"proxy": "http://10.10.2.58:6666", "valid": True, "count": 0},
+        #                {"proxy": "http://10.110.93.95:8088", "valid": True, "count": 0}]
+        self.proxyes = [{"proxy": None, "valid": True, "count": 0}]
         # 初始时使用0号代理(即无代理)
         self.proxy_index = 0
         # 表示可信代理的数量(如自己搭建的HTTP代理)+1(不用代理直接连接)
@@ -44,7 +46,7 @@ class HttpProxyMiddleware(object):
         self.invalid_proxy_threshold = 200
         # 从文件读取初始代理
         with open(self.proxy_file, "r") as fd:
-            lines = fd.readlines()            
+            lines = shuffle(fd.readlines())
             for line in lines:
                 line = line.strip()
                 if not line or self.url_in_proxyes("http://" + line):
@@ -103,14 +105,19 @@ class HttpProxyMiddleware(object):
         new_proxyes = fetch_free_proxyes.fetch_all()
         self.logger.info("new proxyes: %s" % new_proxyes)
         self.last_fetch_proxy_time = datetime.now()
+        next_index = None
         
         for np in new_proxyes:
             if self.url_in_proxyes("http://" + np):
                 continue
             else:
-                self.proxyes.append({"proxy": "http://"  + np,
+                new_one = {"proxy": "http://"  + np,
                                     "valid": True,
-                                    "count": 0})
+                                    "count": 0}
+                self.proxyes.append(new_one)
+                if not next_index:
+                    next_index = self.proxyes.index(new_one)
+        if next_index:self.proxy_index = next_index
         if self.len_valid_proxy() < self.extend_proxy_threshold: # 如果发现抓不到什么新的代理了, 缩小threshold以避免白费功夫
             self.extend_proxy_threshold -= 1
 
@@ -130,7 +137,7 @@ class HttpProxyMiddleware(object):
         如果发现代理列表只有fixed_proxy项有效, 重置代理列表
         如果还发现已经距离上次抓代理过了指定时间, 则抓取新的代理
         """
-        assert self.proxyes[0]["valid"]
+        #assert self.proxyes[0]["valid"]
         while True:
             self.proxy_index = (self.proxy_index + 1) % len(self.proxyes)
             if self.proxyes[self.proxy_index]["valid"]:
@@ -155,7 +162,7 @@ class HttpProxyMiddleware(object):
         #    logger.info("%d munites since last fetch" % self.fetch_proxy_interval)
         #    self.fetch_new_proxyes()
 
-    def set_proxy(self, request):
+    def set_proxy(self, request, spider):
         """
         将request设置使用为当前的或下一个有效代理
         """
@@ -169,26 +176,26 @@ class HttpProxyMiddleware(object):
             
         if proxy["proxy"]:
             request.meta["proxy"] = proxy["proxy"]
+            self.logger.debug("set proxy %s"%proxy)
         elif "proxy" in request.meta.keys():
             del request.meta["proxy"]
-        request.meta["proxy_index"] = self.proxy_index
+        spider.proxy_index = self.proxy_index
         proxy["count"] += 1
 
-    def invalid_proxy(self, index):
+    def invalid_proxy(self, index, spider):
         """
         将index指向的proxy设置为invalid,
         并调整当前proxy_index到下一个有效代理的位置
         """
-        if index < self.fixed_proxy: # 可信代理永远不会设为invalid
+        if index >= self.fixed_proxy:  # 可信代理永远不会设为invalid
             return
-   
         if self.proxyes[index]["valid"]:
             self.logger.info("invalidate %s" % self.proxyes[index])
             self.proxyes[index]["valid"] = False
             if index == self.proxy_index:
                 self.inc_proxy_index()
 
-            if self.proxyes[index]["count"] < self.dump_count_threshold:
+            if self.proxyes[index]["count"] < self.dump_count_threshold and not spider.banned:
                 self.dump_valid_proxy()            
         
     def dump_valid_proxy(self):
@@ -213,14 +220,15 @@ class HttpProxyMiddleware(object):
             self.last_no_proxy_time = datetime.now()
             self.proxy_index = 0
         request.meta["dont_redirect"] = True  # 有些代理会把请求重定向到一个莫名其妙的地址
-	
+
         # spider发现parse error, 要求更换代理
-        if "change_proxy" in request.meta.keys() and request.meta["change_proxy"]:
+        if spider.change_proxy:
             self.logger.info("change proxy request get by spider: %s"  % request)
-            self.invalid_proxy(request.meta["proxy_index"])
-            request.meta["change_proxy"] = False
-        self.set_proxy(request)
-                    
+            self.invalid_proxy(spider.proxy_index, spider)
+            spider.change_proxy = False
+            spider.banned = False
+        self.set_proxy(request, spider)
+
     def process_response(self, request, response, spider):
         """
         检查response.status, 根据status是否在允许的状态码中决定是否切换到下一个proxy, 或者禁用proxy
@@ -236,7 +244,7 @@ class HttpProxyMiddleware(object):
            and (not hasattr(spider, "website_possible_httpstatus_list") \
             or response.status not in spider.website_possible_httpstatus_list):
                 self.logger.info("response status not in spider.website_possible_httpstatus_list")
-                self.invalid_proxy(request.meta["proxy_index"])
+                self.invalid_proxy(spider.proxy_index, spider)
                 new_request = request.copy()
                 new_request.dont_filter = True
                 return new_request
@@ -246,20 +254,33 @@ class HttpProxyMiddleware(object):
         """
         处理由于使用代理导致的连接异常
         """
-        self.logger.debug("%s exception: %s" % (self.proxyes[request.meta["proxy_index"]]["proxy"], exception))
-        request_proxy_index = request.meta["proxy_index"]
-	
+        ex_class = "%s.%s" % (exception.__class__.__module__, exception.__class__.__name__)
+        spider.crawler.stats.inc_value('downloader/exception_count', spider=spider)
+        times = request.meta.get("exception_retry_times", 0)
+        if times >= 20:
+            return
+        self.logger.debug("%s %s: %s" % (self.proxyes[spider.proxy_index]["proxy"], type(exception), exception))
+        print "%s %s: %s" % (self.proxyes[spider.proxy_index]["proxy"], type(exception), exception)
+        request_proxy_index = spider.proxy_index
         # 只有当proxy_index>fixed_proxy-1时才进行比较, 这样能保证至少本地直连是存在的.
         if isinstance(exception, self.DONT_RETRY_ERRORS):
             if request_proxy_index > self.fixed_proxy - 1 and self.invalid_proxy_flag: # WARNING 直连时超时的话换个代理还是重试? 这是策略问题
                  if self.proxyes[request_proxy_index]["count"] < self.invalid_proxy_threshold: 
-                     self.invalid_proxy(request_proxy_index)
+                     self.invalid_proxy(request_proxy_index, spider)
                  elif request_proxy_index == self.proxy_index: # 虽然超时，但是如果之前一直很好用，也不设为invalid
                      self.inc_proxy_index()
             else:               # 简单的切换而不禁用
-                if request.meta["proxy_index"] == self.proxy_index:
+                if spider.proxy_index == self.proxy_index:
                     self.inc_proxy_index()
             new_request = request.copy()
+            new_request.meta["exception_retry_times"] += 1
+            new_request.meta['priority'] = new_request.meta['priority'] - 10
             new_request.dont_filter = True
-            return new_request   
-
+            return new_request
+        request.meta["url"] = request.url
+        if request.meta.get("if_next_page"):
+            spider.crawler.stats.inc_total_pages(crawlid=request.meta['crawlid'],
+                                       spiderid=request.meta['spiderid'],
+                                       appid=request.meta['appid'])
+        spider.crawler.stats.set_failed_download_value(request.meta, ex_class)
+        spider.crawler.stats.inc_value('downloader/exception_type_count/%s' % ex_class, spider=spider)

@@ -70,6 +70,8 @@ class AmazonSpider(JayClusterSpider):
     website_possible_httpstatus_list = [404, 301, 302, 303, 307, 500, 502, 503, 504, 400, 408]
     def __init__(self, *args, **kwargs):
         super(AmazonSpider, self).__init__(*args, **kwargs)
+        self.change_proxy = None
+        self.banned = None
 
     @parse_method_wrapper
     def parse(self, response):
@@ -234,7 +236,7 @@ class AmazonSpider(JayClusterSpider):
                 print("drop response.request: %s" % response.request)
                 return
             else:
-                response.request.meta["change_proxy"] = True
+                #response.request.meta["change_proxy"] = True
                 self.crawler.stats.inc_banned_pages(
                     crawlid=response.meta['crawlid'],
                     spiderid=response.meta['spiderid'],
@@ -243,7 +245,10 @@ class AmazonSpider(JayClusterSpider):
                 #self.log("re-yield response.request: %s" % response.request)
                 self._logger.info("Spiderid: %s Crawlid: %s re-yield response.request: %s" % (response.meta['spiderid'],response.meta['crawlid'],response.request))
                 print("re-yield response.request: %s" % response.request)
-                return response.request
+                req = response.request.copy()
+                self.change_proxy = True
+                self.banned = True
+                return req
 
         asin_divs = sel.xpath('//input[@id="ASIN"]/@value').extract()
         if len(asin_divs) > 0:
