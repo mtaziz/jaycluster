@@ -84,14 +84,14 @@ def fetch_xici():
         for i in range(1, len(trs)):
             tr = trs[i]
             tds = tr.find_all("td")
-            ip = tds[2].text
-            port = tds[3].text
-            speed = tds[7].div["title"][:-1]
-            latency = tds[8].div["title"][:-1]
+            ip = tds[1].text
+            port = tds[2].text
+            speed = tds[6].div["title"][:-1]
+            latency = tds[7].div["title"][:-1]
             if float(speed) < 3 and float(latency) < 1:
                 proxyes.append("%s:%s" % (ip, port))
-    except:
-        logger.warning("fail to fetch from xici")
+    except Exception as e:
+        logger.warning("fail to fetch from xici: %s" % e)
     return proxyes
 
 def fetch_ip181():
@@ -169,16 +169,25 @@ def check(proxy):
         response =opener.open(url,timeout=3)
         return response.code == 200
     except Exception as e:
+        logger.info(e)
         return False
 
-def fetch_all(endpage=2):
+def fetch_all(endpage=2, log=None):
+    global logger
+    logger = log
     proxyes = []
+    logger.info("fetch from kxdaili")
     for i in range(1, endpage):
         proxyes += fetch_kxdaili(i)
+    logger.info("fetch from mimvp")
     proxyes += fetch_mimvp()
+    logger.info("fetch from xici")
     proxyes += fetch_xici()
+    logger.info("fetch from ip181")
     proxyes += fetch_ip181()
+    logger.info("fetch from httpdaili")
     proxyes += fetch_httpdaili()
+    logger.info("fetch from 66ip")
     proxyes += fetch_66ip()
     valid_proxyes = []
     logger.info("checking proxyes validation")
@@ -196,7 +205,7 @@ if __name__ == '__main__':
     root_logger.addHandler(stream_handler)
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
-    proxyes = fetch_all()
+    proxyes = fetch_all(log=logger)
     #print check("202.29.238.242:3128")
     for p in proxyes:
         print p

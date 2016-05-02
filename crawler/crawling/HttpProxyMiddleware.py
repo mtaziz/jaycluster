@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 from twisted.web._newclient import ResponseNeverReceived
 from twisted.internet.error import TimeoutError, ConnectionRefusedError, ConnectError
+from twisted.web._newclient import ResponseFailed
 import fetch_free_proxyes
 from scutils.log_factory import LogFactory
 from utils import get_raspberrypi_ip_address
@@ -13,7 +14,7 @@ import os
 
 class HttpProxyMiddleware(object):
     # 遇到这些类型的错误直接当做代理不可用处理掉, 不再传给retrymiddleware
-    DONT_RETRY_ERRORS = (TimeoutError, ConnectionRefusedError, ResponseNeverReceived, ConnectError, ValueError, TypeError)
+    DONT_RETRY_ERRORS = (ResponseFailed, TimeoutError, ConnectionRefusedError, ResponseNeverReceived, ConnectError, ValueError, TypeError)
     
     def __init__(self, settings):
         # 保存上次不用代理直接连接的时间点
@@ -105,7 +106,7 @@ class HttpProxyMiddleware(object):
         从网上抓取新的代理添加到代理列表中
         """
         self.logger.info("extending proxyes using fetch_free_proxyes.py")
-        new_proxyes = fetch_free_proxyes.fetch_all()
+        new_proxyes = fetch_free_proxyes.fetch_all(log=self.logger)
         self.logger.info("new proxyes: %s" % new_proxyes)
         self.last_fetch_proxy_time = datetime.now()
         next_index = None
@@ -203,7 +204,7 @@ class HttpProxyMiddleware(object):
         
     def dump_valid_proxy(self):
         """
-        保存代理列表中有效的代理到文件
+        保存代理列表中有效的代理到文件192.168.122.160
         """
         if self.dump_count_threshold <= 0:
             return
@@ -226,7 +227,7 @@ class HttpProxyMiddleware(object):
 
         # spider发现parse error, 要求更换代理
         if spider.change_proxy:
-            self.logger.info("change proxy request get by spider: %s"  % request)
+            self.logger.info("change proxy request get by spider: %s"  % request.meta.get("proxy"))
             self.invalid_proxy(spider.proxy_index, spider)
             spider.change_proxy = False
             spider.banned = False
@@ -259,7 +260,7 @@ class HttpProxyMiddleware(object):
         """
         ex_class = "%s.%s" % (exception.__class__.__module__, exception.__class__.__name__)
         spider.crawler.stats.inc_value('downloader/exception_count', spider=spider)
-        times = request.meta.get("exception_retry_times", 0)
+        times = request.meta.get("exception_retry_times", 20)
         if times >= 20:
             return
         self.logger.debug("%s %s: %s" % (self.proxyes[spider.proxy_index]["proxy"], type(exception), exception))
@@ -267,11 +268,15 @@ class HttpProxyMiddleware(object):
         request_proxy_index = spider.proxy_index
         # 只有当proxy_index>fixed_proxy-1时才进行比较, 这样能保证至少本地直连是存在的.
         if isinstance(exception, self.DONT_RETRY_ERRORS):
+            self.logger.info("request_proxy_index:", request_proxy_index, "self.fixed_proxy:", self.fixed_proxy)
             if request_proxy_index > self.fixed_proxy - 1 and self.invalid_proxy_flag: # WARNING 直连时超时的话换个代理还是重试? 这是策略问题
                  if self.proxyes[request_proxy_index]["count"] < self.invalid_proxy_threshold: 
                      self.invalid_proxy(request_proxy_index, spider)
                  elif request_proxy_index == self.proxy_index: # 虽然超时，但是如果之前一直很好用，也不设为invalid
                      self.inc_proxy_index()
+                 else:
+                     self.logger("haven't change daili")
+                     self.logger("request_proxy_index:%s self.proxy_index:%s"%(request_proxy_index, self.proxy_index))
             else:               # 简单的切换而不禁用
                 if spider.proxy_index == self.proxy_index:
                     self.inc_proxy_index()
