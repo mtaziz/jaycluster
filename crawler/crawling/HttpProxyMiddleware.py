@@ -46,7 +46,8 @@ class HttpProxyMiddleware(object):
         self.invalid_proxy_threshold = 200
         # 从文件读取初始代理
         with open(self.proxy_file, "r") as fd:
-            lines = shuffle(fd.readlines())
+            lines = fd.readlines()
+            shuffle(lines)
             for line in lines:
                 line = line.strip()
                 if not line or self.url_in_proxyes("http://" + line):
