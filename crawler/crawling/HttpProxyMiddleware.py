@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import logging
 from datetime import datetime, timedelta
 from twisted.web._newclient import ResponseNeverReceived
 from twisted.internet.error import TimeoutError, ConnectionRefusedError, ConnectError
@@ -8,6 +7,7 @@ import fetch_free_proxyes
 from scutils.log_factory import LogFactory
 from utils import get_raspberrypi_ip_address
 from random import shuffle
+import os
 
 
 
@@ -23,7 +23,7 @@ class HttpProxyMiddleware(object):
         # 一个proxy如果没用到这个数字就被发现老是超时, 则永久移除该proxy. 设为0则不会修改代理文件.
         self.dump_count_threshold = 20
         # 存放代理列表的文件, 每行一个代理, 格式为ip:port, 注意没有http://, 而且这个文件会被修改, 注意备份
-        self.proxy_file = "crawling/proxyes.list"
+        self.proxy_file = "%s_proxyes.list"%get_raspberrypi_ip_address()
         # 是否在超时的情况下禁用代理
         self.invalid_proxy_flag = True
         # 当有效代理小于这个数时(包括直连), 从网上抓取新的代理, 可以将这个数设为为了满足每个ip被要求输入验证码后得到足够休息时间所需要的代理数
@@ -44,6 +44,8 @@ class HttpProxyMiddleware(object):
         self.fetch_proxy_interval = 120
         # 一个将被设为invalid的代理如果已经成功爬取大于这个参数的页面， 将不会被invalid
         self.invalid_proxy_threshold = 200
+        if not os.path.exists(self.proxy_file):
+            open(self.proxy_file, "w")
         # 从文件读取初始代理
         with open(self.proxy_file, "r") as fd:
             lines = fd.readlines()
@@ -145,7 +147,7 @@ class HttpProxyMiddleware(object):
                 break
 
         # 两轮proxy_index==0的时间间隔过短， 说明出现了验证码抖动，扩展代理列表
-        if self.proxy_index == 0 and datetime.now() < self.last_no_proxy_time + timedelta(minutes=2):
+        if self.proxy_index == 0 and datetime.now() < self.last_no_proxy_time + timedelta(minutes=20):
             self.logger.info("captcha thrashing")
             self.fetch_new_proxyes()
 
