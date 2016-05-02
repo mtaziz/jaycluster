@@ -191,7 +191,7 @@ class HttpProxyMiddleware(object):
         将index指向的proxy设置为invalid,
         并调整当前proxy_index到下一个有效代理的位置
         """
-        if index >= self.fixed_proxy:  # 可信代理永远不会设为invalid
+        if index < self.fixed_proxy:  # 可信代理永远不会设为invalid
             return
         if self.proxyes[index]["valid"]:
             self.logger.info("invalidate %s" % self.proxyes[index])
