@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from datetime import datetime, timedelta
-from twisted.web._newclient import ResponseNeverReceived
+from twisted.web._newclient import ResponseNeverReceived, ResponseFailed, _WrapperException
 from twisted.internet.error import TimeoutError, ConnectionRefusedError, ConnectError
-from twisted.web._newclient import ResponseFailed
 import fetch_free_proxyes
 from scutils.log_factory import LogFactory
 from utils import get_raspberrypi_ip_address
@@ -14,7 +13,7 @@ import os
 
 class HttpProxyMiddleware(object):
     # 遇到这些类型的错误直接当做代理不可用处理掉, 不再传给retrymiddleware
-    DONT_RETRY_ERRORS = (ResponseFailed, TimeoutError, ConnectionRefusedError, ResponseNeverReceived, ConnectError, ValueError, TypeError)
+    DONT_RETRY_ERRORS = (_WrapperException, ResponseFailed, TimeoutError, ConnectionRefusedError, ResponseNeverReceived, ConnectError, ValueError, TypeError)
     
     def __init__(self, settings):
         # 保存上次不用代理直接连接的时间点
@@ -227,7 +226,7 @@ class HttpProxyMiddleware(object):
 
         # spider发现parse error, 要求更换代理
         if spider.change_proxy:
-            self.logger.info("change proxy %s request get by spider"  % request.meta.get("proxy"))
+            self.logger.info("current proxy is %s, change to next. "  % request.meta.get("proxy", "localhost"))
             self.invalid_proxy(spider.proxy_index, spider)
             spider.change_proxy = False
             spider.banned = False
@@ -258,37 +257,42 @@ class HttpProxyMiddleware(object):
         """
         处理由于使用代理导致的连接异常
         """
-        ex_class = "%s.%s" % (exception.__class__.__module__, exception.__class__.__name__)
-        spider.crawler.stats.inc_value('downloader/exception_count', spider=spider)
-        times = request.meta.get("exception_retry_times", 20)
-        if times >= 20:
-            return
-        self.logger.debug("%s %s: %s" % (self.proxyes[spider.proxy_index]["proxy"], type(exception), exception))
-        print "%s %s: %s" % (self.proxyes[spider.proxy_index]["proxy"], type(exception), exception)
-        request_proxy_index = spider.proxy_index
-        # 只有当proxy_index>fixed_proxy-1时才进行比较, 这样能保证至少本地直连是存在的.
-        if isinstance(exception, self.DONT_RETRY_ERRORS):
-            self.logger.info("request_proxy_index:", request_proxy_index, "self.fixed_proxy:", self.fixed_proxy)
-            if request_proxy_index > self.fixed_proxy - 1 and self.invalid_proxy_flag: # WARNING 直连时超时的话换个代理还是重试? 这是策略问题
-                 if self.proxyes[request_proxy_index]["count"] < self.invalid_proxy_threshold: 
-                     self.invalid_proxy(request_proxy_index, spider)
-                 elif request_proxy_index == self.proxy_index: # 虽然超时，但是如果之前一直很好用，也不设为invalid
-                     self.inc_proxy_index()
-                 else:
-                     self.logger("haven't change daili")
-                     self.logger("request_proxy_index:%s self.proxy_index:%s"%(request_proxy_index, self.proxy_index))
-            else:               # 简单的切换而不禁用
-                if spider.proxy_index == self.proxy_index:
-                    self.inc_proxy_index()
-            new_request = request.copy()
-            new_request.meta["exception_retry_times"] += 1
-            new_request.meta['priority'] = new_request.meta['priority'] - 10
-            new_request.dont_filter = True
-            return new_request
-        request.meta["url"] = request.url
-        if request.meta.get("if_next_page"):
-            spider.crawler.stats.inc_total_pages(crawlid=request.meta['crawlid'],
-                                       spiderid=request.meta['spiderid'],
-                                       appid=request.meta['appid'])
-        spider.crawler.stats.set_failed_download_value(request.meta, ex_class)
-        spider.crawler.stats.inc_value('downloader/exception_type_count/%s' % ex_class, spider=spider)
+        try:
+            ex_class = "%s.%s" % (exception.__class__.__module__, exception.__class__.__name__)
+            spider.crawler.stats.inc_value('downloader/exception_count', spider=spider)
+            times = request.meta.get("exception_retry_times", 20)
+            if times >= 20:
+                return
+            self.logger.debug("%s %s: %s" % (self.proxyes[spider.proxy_index]["proxy"], type(exception), exception))
+            print "%s %s: %s" % (self.proxyes[spider.proxy_index]["proxy"], type(exception), exception)
+            request_proxy_index = spider.proxy_index
+            # 只有当proxy_index>fixed_proxy-1时才进行比较, 这样能保证至少本地直连是存在的.
+            if isinstance(exception, self.DONT_RETRY_ERRORS):
+                self.logger.info("request_proxy_index:", request_proxy_index, "self.fixed_proxy:", self.fixed_proxy)
+                if request_proxy_index > self.fixed_proxy - 1 and self.invalid_proxy_flag: # WARNING 直连时超时的话换个代理还是重试? 这是策略问题
+                     if self.proxyes[request_proxy_index]["count"] < self.invalid_proxy_threshold:
+                         self.invalid_proxy(request_proxy_index, spider)
+                     elif request_proxy_index == self.proxy_index: # 虽然超时，但是如果之前一直很好用，也不设为invalid
+                         self.inc_proxy_index()
+                     else:
+                         self.logger("haven't change daili")
+                         self.logger("request_proxy_index:%s self.proxy_index:%s"%(request_proxy_index, self.proxy_index))
+                else:               # 简单的切换而不禁用
+                    if spider.proxy_index == self.proxy_index:
+                        self.inc_proxy_index()
+                new_request = request.copy()
+                new_request.meta["exception_retry_times"] += 1
+                new_request.meta['priority'] = new_request.meta['priority'] - 10
+                new_request.dont_filter = True
+                return new_request
+            request.meta["url"] = request.url
+            if request.meta.get("if_next_page"):
+                spider.crawler.stats.inc_total_pages(crawlid=request.meta['crawlid'],
+                                           spiderid=request.meta['spiderid'],
+                                           appid=request.meta['appid'])
+            spider.crawler.stats.set_failed_download_value(request.meta, ex_class)
+            spider.crawler.stats.inc_value('downloader/exception_type_count/%s' % ex_class, spider=spider)
+        except:
+            import sys, traceback
+            print("in process_exception proxy:%s"%traceback.format_exception(*sys.exc_info()))
+            self.logger("in process_exception proxy:%s"%traceback.format_exception(*sys.exc_info()))
