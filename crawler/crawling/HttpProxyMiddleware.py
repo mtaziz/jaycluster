@@ -180,7 +180,7 @@ class HttpProxyMiddleware(object):
             
         if proxy["proxy"]:
             request.meta["proxy"] = proxy["proxy"]
-            self.logger.debug("set proxy %s"%proxy)
+            self.logger.info("set proxy %s"%proxy)
         elif "proxy" in request.meta.keys():
             del request.meta["proxy"]
         spider.proxy_index = self.proxy_index
@@ -191,16 +191,16 @@ class HttpProxyMiddleware(object):
         将index指向的proxy设置为invalid,
         并调整当前proxy_index到下一个有效代理的位置
         """
-        if index < self.fixed_proxy:  # 可信代理永远不会设为invalid
-            return
-        if self.proxyes[index]["valid"]:
+        if self.proxyes[index]["valid"] and index >= self.fixed_proxy: # 可信代理永远不会设为invalid
             self.logger.info("invalidate %s" % self.proxyes[index])
             self.proxyes[index]["valid"] = False
             if index == self.proxy_index:
                 self.inc_proxy_index()
 
             if self.proxyes[index]["count"] < self.dump_count_threshold and not spider.banned:
-                self.dump_valid_proxy()            
+                self.dump_valid_proxy()
+        elif index < self.fixed_proxy:  # 可信代理永远不会设为invalid
+            self.inc_proxy_index()
         
     def dump_valid_proxy(self):
         """
@@ -227,7 +227,7 @@ class HttpProxyMiddleware(object):
 
         # spider发现parse error, 要求更换代理
         if spider.change_proxy:
-            self.logger.info("change proxy request get by spider: %s"  % request.meta.get("proxy"))
+            self.logger.info("change proxy %s request get by spider"  % request.meta.get("proxy"))
             self.invalid_proxy(spider.proxy_index, spider)
             spider.change_proxy = False
             spider.banned = False
