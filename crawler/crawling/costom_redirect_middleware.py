@@ -28,12 +28,11 @@ class CustomRedirectMiddleware(RedirectMiddleware):
             redirected.dont_filter = request.dont_filter
             redirected.priority = request.priority + self.priority_adjust
             self.logger.debug("Redirecting (%(reason)s) to %(redirected)s from %(request)s",
-                         {'reason': reason, 'redirected': redirected, 'request': request},
-                         extra={'spider': spider})
+                         {'reason': reason, 'redirected': redirected, 'request': request})
             return redirected
         else:
             self.logger.debug("Discarding %(request)s: max redirections reached",
-                         {'request': request}, extra={'spider': spider})
+                         {'request': request})
             request.meta["url"] = request.url
             if request.meta.get("if_next_page"):
                 spider.crawler.stats.inc_total_pages(crawlid=request.meta['crawlid'],

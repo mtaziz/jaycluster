@@ -2,14 +2,14 @@
 
 from put_proxy_to_redis import ProxyRedisRepository
 from twisted.web._newclient import ResponseNeverReceived, ResponseFailed, _WrapperException
-from twisted.internet.error import TimeoutError, ConnectionRefusedError, ConnectError
+from twisted.internet.error import TimeoutError, ConnectionRefusedError, ConnectError, TCPTimedOutError
 from scutils.log_factory import LogFactory
 from utils import get_raspberrypi_ip_address
 from datetime import *
 
 class HttpProxyMiddleware(object):
     DONT_RETRY_ERRORS = (
-    _WrapperException, ResponseFailed, TimeoutError, ConnectionRefusedError, ResponseNeverReceived, ConnectError,
+    _WrapperException, TCPTimedOutError, ResponseFailed, TimeoutError, ConnectionRefusedError, ResponseNeverReceived, ConnectError,
     ValueError, TypeError)
 
     def __init__(self, settings):
