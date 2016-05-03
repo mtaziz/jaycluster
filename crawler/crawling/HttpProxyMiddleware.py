@@ -62,13 +62,11 @@ class HttpProxyMiddleware(object):
     def from_crawler(cls, crawler):
         settings = crawler.settings
         my_level = settings.get('SC_LOG_LEVEL', 'DEBUG')
-        # my_name = settings.get('SC_LOGGER_NAME', 'sc-logger')
         my_name = "%s_%s" % (crawler.spidercls.name, get_raspberrypi_ip_address())
         my_output = settings.get('SC_LOG_STDOUT', False)
         my_json = settings.get('SC_LOG_JSON', True)
         my_dir = settings.get('SC_LOG_DIR', 'logs')
         my_bytes = settings.get('SC_LOG_MAX_BYTES', '10MB')
-        # my_file = settings.get('SC_LOG_FILE')
         my_file = "%s_%s.log" % (crawler.spidercls.name, get_raspberrypi_ip_address())
         my_backups = settings.get('SC_LOG_BACKUPS', 5)
 
