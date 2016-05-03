@@ -17,6 +17,15 @@ class CustomRedirectMiddleware(RedirectMiddleware):
         reason = response_status_message(reason)
         ttl = request.meta.setdefault('redirect_ttl', self.max_redirect_times)
         redirects = request.meta.get('redirect_times', 0) + 1
+        if spider.name == "amazon" and redirected.url[11:17] != "amazon":
+            spider.logger.info("redirect to wrong url: %s" % redirected.url)
+            print "redirect to wrong url: %s" % redirected.url
+            new_request = request.copy()
+            # new_request.meta["dont_redirect"] = True  # 有些代理会把请求重定向到一个莫名其妙的地址
+            new_request.dont_filter = True
+            spider.logger.info("in _redirect re-yield response.request: %s" % request.url)
+            print "in _redirect re-yield response.request: %s" % request.url
+            return new_request
 
         if ttl and redirects <= self.max_redirect_times:
             redirected.meta['redirect_times'] = redirects
