@@ -171,7 +171,7 @@ def fetch_66ip():
 
 def check(proxy):
     import urllib2
-    url = "http://www.baidu.com/js/bdsug.js?v=1.0.3.0"
+    url = "http://www.amazon.com/"
     proxy_handler = urllib2.ProxyHandler({'http': "http://" + proxy})
     opener = urllib2.build_opener(proxy_handler,urllib2.HTTPHandler)
     try:
