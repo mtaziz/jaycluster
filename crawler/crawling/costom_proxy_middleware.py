@@ -124,11 +124,11 @@ class HttpProxyMiddleware(object):
             print "%s %s: %s" % (request.meta.get("proxy", "local"), type(exception), exception)
             # 只有当proxy_index>fixed_proxy-1时才进行比较, 这样能保证至少本地直连是存在的.
             new_request = request.copy()
+            new_request.meta["exception_retry_times"] += 1
+            new_request.meta['priority'] = new_request.meta['priority'] - 10
             if isinstance(exception, self.DONT_RETRY_ERRORS) and self.proxy_count == 0:
                 spider.change_proxy = True
             else:
                 self.proxy_count = 0
-                new_request.meta["exception_retry_times"] += 1
-                new_request.meta['priority'] = new_request.meta['priority'] - 10
             new_request.dont_filter = True
             return new_request
