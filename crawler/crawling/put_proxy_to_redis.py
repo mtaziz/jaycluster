@@ -47,7 +47,7 @@ if __name__ == "__main__":
         rep = ProxyRedisRepository(REDIS_HOST)
         length = len(rep)
         print length
-        if length<200:
+        if length<20000:
             rep.updateProxyAddr()
         else:
             time.sleep(60)
