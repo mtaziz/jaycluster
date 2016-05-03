@@ -61,13 +61,17 @@ class HttpProxyMiddleware(object):
                     self.proxy = "local"
                 else:
                     self.proxy = self.rep.pop()
+                    if not self.proxy:
+                        self.logger.info("repository is empty")
+                        print "repository is empty"
+                        self.proxy = "local"
                 self.logger.info("change to %s. " % self.proxy)
                 print "change to %s. " % self.proxy
             if self.proxy != "local":
                 self.logger.info("use proxy %s to send request"%self.proxy)
                 print "use proxy %s to send request"%self.proxy
                 request.meta["proxy"] = self.proxy
-                request.meta["dont_redirect"] = True
+                #request.meta["dont_redirect"] = True
                 spider.change_proxy = False
             else:
                 if request.meta.get("proxy"):del request.meta["proxy"]
