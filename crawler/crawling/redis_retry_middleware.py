@@ -32,8 +32,7 @@ class RedisRetryMiddleware(RetryMiddleware):
                                                    spiderid=request.meta['spiderid'],
                                                    appid=request.meta['appid'])
             spider.crawler.stats.set_failed_download_value(request.meta, "%s_%s"%(reason, "retry many times. "))
-            self.logger.debug("Gave up retrying %(request)s (failed %(retries)d times): %(reason)s",
-                         {'request': request, 'retries': retries, 'reason': reason})
+            self.logger.debug("Gave up retrying %s (failed %d times): %s"%(request.url, retries, reason))
             raise IgnoreRequest("max retry times")
 
     def process_exception(self, request, exception, spider):

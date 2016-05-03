@@ -1,9 +1,7 @@
 # -*- coding:utf-8 -*-
-import logging
 from scrapy.downloadermiddlewares.redirect import RedirectMiddleware
 from scrapy.utils.response import response_status_message
 from scrapy.exceptions import IgnoreRequest
-logger = logging.getLogger(__name__)
 
 class CustomRedirectMiddleware(RedirectMiddleware):
     def __init__(self, crawler):
@@ -27,12 +25,10 @@ class CustomRedirectMiddleware(RedirectMiddleware):
                                                [request.url]
             redirected.dont_filter = request.dont_filter
             redirected.priority = request.priority + self.priority_adjust
-            self.logger.debug("Redirecting (%(reason)s) to %(redirected)s from %(request)s",
-                         {'reason': reason, 'redirected': redirected, 'request': request})
+            self.logger.debug("Redirecting %s to %s from %s"%(reason, redirected.url, request.url))
             return redirected
         else:
-            self.logger.debug("Discarding %(request)s: max redirections reached",
-                         {'request': request})
+            self.logger.debug("Discarding %s: max redirections reached"%request.url)
             request.meta["url"] = request.url
             if request.meta.get("if_next_page"):
                 spider.crawler.stats.inc_total_pages(crawlid=request.meta['crawlid'],
