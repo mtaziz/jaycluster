@@ -31,6 +31,9 @@ class RedisRetryMiddleware(RetryMiddleware):
                 spider.crawler.stats.inc_total_pages(crawlid=request.meta['crawlid'],
                                                    spiderid=request.meta['spiderid'],
                                                    appid=request.meta['appid'])
+            spider._logger.info(
+                "in retry request error to failed pages url:%s, exception:%s, meta:%s" % (request.url, reason, request.meta))
+            print "in retry request error to failed pages url:%s, exception:%s, meta:%s" % (request.url, reason, request.meta)
             spider.crawler.stats.set_failed_download_value(request.meta, "%s_%s"%(reason, "retry many times. "))
             self.logger.debug("Gave up retrying %s (failed %d times): %s"%(request.url, retries, reason))
             raise IgnoreRequest("max retry times")

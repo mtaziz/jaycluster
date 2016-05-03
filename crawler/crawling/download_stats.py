@@ -32,5 +32,7 @@ class CostomDownloaderStats(DownloaderStats):
                 self.stats.inc_total_pages(crawlid=request.meta['crawlid'],
                                                    spiderid=request.meta['spiderid'],
                                                    appid=request.meta['appid'])
+            spider._logger.info("in stats request error to failed pages url:%s, exception:%s, meta:%s"%(request.url, exception, request.meta))
+            print "in stats  request error to failed pages url:%s, exception:%s, meta:%s"%(request.url, exception, request.meta)
             self.stats.set_failed_download_value(request.meta, ex_class)
             self.stats.inc_value('downloader/exception_type_count/%s' % ex_class, spider=spider)

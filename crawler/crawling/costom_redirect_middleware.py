@@ -34,6 +34,9 @@ class CustomRedirectMiddleware(RedirectMiddleware):
                 spider.crawler.stats.inc_total_pages(crawlid=request.meta['crawlid'],
                                                      spiderid=request.meta['spiderid'],
                                                      appid=request.meta['appid'])
+            spider._logger.info(
+                " in redicrect request error to failed pages url:%s, exception:%s, meta:%s" % (request.url, reason, request.meta))
+            print "in redicrect request error to failed pages url:%s, exception:%s, meta:%s" % (request.url, reason, request.meta)
             self.stats.set_failed_download_value(request.meta, reason)
             raise IgnoreRequest("max redirections reached")
 

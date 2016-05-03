@@ -44,6 +44,7 @@ class HttpProxyMiddleware(object):
     def yield_new_request(self, request, spider):
         spider.change_proxy = True
         new_request = request.copy()
+        #new_request.meta["dont_redirect"] = True  # 有些代理会把请求重定向到一个莫名其妙的地址
         new_request.dont_filter = True
         self.logger.info("re-yield response.request: %s" % request.url)
         print "re-yield response.request: %s" % request.url
@@ -73,7 +74,7 @@ class HttpProxyMiddleware(object):
                 self.logger.info("use proxy %s to send request"%self.proxy)
                 print "use proxy %s to send request"%self.proxy
                 request.meta["proxy"] = self.proxy
-                #request.meta["dont_redirect"] = True
+                #request.meta["dont_redirect"] = True  # 有些代理会把请求重定向到一个莫名其妙的地址
                 spider.change_proxy = False
             else:
                 if request.meta.get("proxy"):del request.meta["proxy"]
@@ -105,6 +106,10 @@ class HttpProxyMiddleware(object):
                     self.logger.info("BANNED by amazon.com: %s" % request.url)
                     print "BANNED by amazon.com: %s" % request.url
                     return self.yield_new_request(request, spider)
+            elif response.url[11:17] != "amazon":
+                self.logger.info("redirect to wrong url: %s" % response.url)
+                print "redirect to wrong url: %s" % response.url
+                return self.yield_new_request(request, spider)
             self.proxy_count += 1
             self.logger.debug("Proxy %s have crawled %s task. "%(self.proxy, self.proxy_count))
         return response
