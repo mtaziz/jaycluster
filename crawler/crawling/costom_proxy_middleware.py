@@ -16,6 +16,7 @@ class HttpProxyMiddleware(object):
         self.settings = settings
         self.rep = ProxyRedisRepository(settings.get("REDIS_HOST"))
         self.proxy = "local"
+        self.proxy_count = 0
         self.start_use_proxy_time = None
 
     @classmethod
@@ -67,6 +68,7 @@ class HttpProxyMiddleware(object):
                         self.proxy = "local"
                 self.logger.info("change to %s. " % self.proxy)
                 print "change to %s. " % self.proxy
+                self.proxy_count = 0
             if self.proxy != "local":
                 self.logger.info("use proxy %s to send request"%self.proxy)
                 print "use proxy %s to send request"%self.proxy
@@ -103,6 +105,8 @@ class HttpProxyMiddleware(object):
                     self.logger.info("BANNED by amazon.com: %s" % request.url)
                     print "BANNED by amazon.com: %s" % request.url
                     return self.yield_new_request(request, spider)
+            self.proxy_count += 1
+            self.logger.debug("Proxy %s have crawled %s task. "%(self.proxy, self.proxy_count))
         return response
 
     def process_exception(self, request, exception, spider):
@@ -120,7 +124,7 @@ class HttpProxyMiddleware(object):
             print "%s %s: %s" % (request.meta.get("proxy", "local"), type(exception), exception)
             # 只有当proxy_index>fixed_proxy-1时才进行比较, 这样能保证至少本地直连是存在的.
             new_request = request.copy()
-            if isinstance(exception, self.DONT_RETRY_ERRORS):
+            if isinstance(exception, self.DONT_RETRY_ERRORS) and self.proxy_count == 0:
                 spider.change_proxy = True
             else:
                 new_request.meta["exception_retry_times"] += 1
