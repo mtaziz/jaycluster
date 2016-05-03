@@ -9,6 +9,11 @@ class CustomRedirectMiddleware(RedirectMiddleware):
     def __init__(self, crawler):
         super(CustomRedirectMiddleware, self).__init__(crawler.settings)
         self.stats = crawler.stats
+        self.crawler = crawler
+
+    @property
+    def logger(self):
+        return self.crawler.spider._logger
 
     def _redirect(self, redirected, request, spider, reason):
         reason = response_status_message(reason)
@@ -22,12 +27,12 @@ class CustomRedirectMiddleware(RedirectMiddleware):
                                                [request.url]
             redirected.dont_filter = request.dont_filter
             redirected.priority = request.priority + self.priority_adjust
-            logger.debug("Redirecting (%(reason)s) to %(redirected)s from %(request)s",
+            self.logger.debug("Redirecting (%(reason)s) to %(redirected)s from %(request)s",
                          {'reason': reason, 'redirected': redirected, 'request': request},
                          extra={'spider': spider})
             return redirected
         else:
-            logger.debug("Discarding %(request)s: max redirections reached",
+            self.logger.debug("Discarding %(request)s: max redirections reached",
                          {'request': request}, extra={'spider': spider})
             request.meta["url"] = request.url
             if request.meta.get("if_next_page"):
