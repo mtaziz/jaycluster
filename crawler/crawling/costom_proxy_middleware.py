@@ -127,6 +127,7 @@ class HttpProxyMiddleware(object):
             if isinstance(exception, self.DONT_RETRY_ERRORS) and self.proxy_count == 0:
                 spider.change_proxy = True
             else:
+                self.proxy_count = 0
                 new_request.meta["exception_retry_times"] += 1
                 new_request.meta['priority'] = new_request.meta['priority'] - 10
             new_request.dont_filter = True
