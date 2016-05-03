@@ -35,3 +35,6 @@ class RedisRetryMiddleware(RetryMiddleware):
             self.logger.debug("Gave up retrying %(request)s (failed %(retries)d times): %(reason)s",
                          {'request': request, 'retries': retries, 'reason': reason})
             raise IgnoreRequest("max retry times")
+
+    def process_exception(self, request, exception, spider):
+        pass
