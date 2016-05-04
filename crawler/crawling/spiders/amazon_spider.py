@@ -102,7 +102,7 @@ class AmazonSpider(JayClusterSpider):
     @validate_item_wrapper("get")
     @parse_method_wrapper
     def parse_item(self, response):
-        self._logger.info("start response in parse_item -> response type:%s" % type(response))
+        self._logger.info("start response in parse_item -> response type:%s" %type(response).__name__)
         sel = Selector(response)
         item = AmazonItem()
         self._enrich_base_data(item, response, is_update=False)
@@ -143,7 +143,7 @@ class AmazonSpider(JayClusterSpider):
     @validate_item_wrapper("update")
     @parse_method_wrapper
     def parse_item_update(self, response):
-        self._logger.info("start response in parse_item_update -> response type:%s" % type(response))
+        self._logger.info("start response in parse_item_update -> response type:%s" % type(response).__name__)
         item = AmazonItem()
         meta = response.meta
         self._enrich_base_data(item, response, is_update=True)
