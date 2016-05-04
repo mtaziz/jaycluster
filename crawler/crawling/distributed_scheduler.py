@@ -448,9 +448,12 @@ class DistributedScheduler(object):
                 item = self.queue_dict[key].pop()
                 self.present_item = item
                 #self.spider.log('key: %s ' % key)
-                self.logger.info('key: %s ' % key)
+                msgvalue = {'queuename':key,'lenthofqueue':(int(len(self.queue_dict[key])) or 0)}
+                msg = "lenth of queue %s" % key
+                #self.logger.info('key: %s ' % key)
                 #self.spider.log('len(self.queue_dict[key]): %s '% len(self.queue_dict[key]))
-                self.logger.info('len(self.queue_dict[key]): %s ' % len(self.queue_dict[key]))
+                #self.logger.info('len(self.queue_dict[key]): %s ' % len(self.queue_dict[key]))
+                self.logger.info(msg,msgvalue)
 
                 print('key: %s ' % key)
                 print('len(self.queue_dict[key]): %s '% len(self.queue_dict[key]))

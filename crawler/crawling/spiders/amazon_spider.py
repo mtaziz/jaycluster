@@ -146,7 +146,6 @@ class AmazonSpider(JayClusterSpider):
         robot_checks = sel.xpath('//title[@dir="ltr"]/text()').extract()
         if len(robot_checks) > 0:
             self._logger.info("BANNED by amazon.com: %s" % response.request)
-            # self.log("BANNED by amazon.com: %s" % response.request)
             print("BANNED by amazon.com: %s" % response.request)
             if item['meta']['workers'][self.worker_id] >= self.crawler.settings.get("BANNED_RETRY_TIMES", 101):
                 self.crawler.stats.inc_drop_pages(
@@ -158,7 +157,6 @@ class AmazonSpider(JayClusterSpider):
                     page_type = "get_product"
                 )
                 self._logger.info("drop response.request: %s" % response.request)
-                # self.log("drop response.request: %s" % response.request)
                 print("drop response.request: %s" % response.request)
                 return
             else:
