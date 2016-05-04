@@ -163,12 +163,12 @@ class Aria2Dispatcher:
                 val = message.message.value
                 try:
                     item = json.loads(val)
+                    i += 1
+                    self._process_item(item, i % len(self.aria2_clients))
                 except:
-                    print("error heppened in loads val: %s"%val)
-                    logger.error("error heppened in loads val: %s"%val)
-                    item = {"error":val}
-                i += 1
-                self._process_item(item, i % len(self.aria2_clients))
+                    print("error heppened in loads val to process : %s" % val)
+                    logger.error("error heppened in loads val to process: %s" % val)
+                    continue
             except:
                 traceback.print_exc()
                 break
