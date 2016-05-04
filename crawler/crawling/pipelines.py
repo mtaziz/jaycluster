@@ -208,7 +208,7 @@ class LoggingAfterPipeline(object):
             # make duplicate item, but remove unneeded keys
             item_copy = dict(item)
             if item['success']:
-                self.logger.info('Sent page to Kafka')
+                self.logger.info('Sent page to Kafka', extra=item_copy)
             else:
                 self.logger.error('Failed to send page to Kafka',
                                   extra=item_copy)
