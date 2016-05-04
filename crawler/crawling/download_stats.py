@@ -1,7 +1,6 @@
 from scrapy.downloadermiddlewares.stats import DownloaderStats
 from scrapy.utils.response import response_httprepr
 from scrapy.conf import settings
-import twisted
 
 class CostomDownloaderStats(DownloaderStats):
 

@@ -3,7 +3,7 @@
 from put_proxy_to_redis import ProxyRedisRepository
 from twisted.web._newclient import ResponseNeverReceived, ResponseFailed, _WrapperException
 from twisted.internet.error import TimeoutError, ConnectionRefusedError, ConnectError, TCPTimedOutError
-from scutils.log_factory import LogFactory
+from custom_log_factory import CustomLogFactory
 from utils import get_raspberrypi_ip_address
 from datetime import *
 
@@ -31,7 +31,7 @@ class HttpProxyMiddleware(object):
         my_file = "%s_%s.log" % (crawler.spidercls.name, get_raspberrypi_ip_address())
         my_backups = settings.get('SC_LOG_BACKUPS', 5)
 
-        cls.logger = LogFactory.get_instance(json=my_json,
+        cls.logger = CustomLogFactory.get_instance(json=my_json,
                                              name=my_name,
                                              stdout=my_output,
                                              level=my_level,
@@ -47,7 +47,6 @@ class HttpProxyMiddleware(object):
         #new_request.meta["dont_redirect"] = True  # 有些代理会把请求重定向到一个莫名其妙的地址
         new_request.dont_filter = True
         self.logger.info("re-yield response.request: %s" % request.url)
-        print "re-yield response.request: %s" % request.url
         return new_request
 
     def process_request(self, request, spider):
@@ -56,7 +55,6 @@ class HttpProxyMiddleware(object):
         """
         if spider.name == "amazon":
             self.logger.info("current proxy is %s"%self.proxy)
-            print  "current proxy is %s"%self.proxy
             if spider.change_proxy:
                 self.start_use_proxy_time = self.start_use_proxy_time if self.start_use_proxy_time and self.proxy!="local" else datetime.now()
                 if self.start_use_proxy_time < datetime.now() - timedelta(minutes=self.settings.get("SLEEP_MINUTES", 20)):
@@ -65,14 +63,11 @@ class HttpProxyMiddleware(object):
                     self.proxy = self.rep.pop()
                     if not self.proxy:
                         self.logger.info("repository is empty")
-                        print "repository is empty"
                         self.proxy = "local"
                 self.logger.info("change to %s. " % self.proxy)
-                print "change to %s. " % self.proxy
                 self.proxy_count = 0
             if self.proxy != "local":
                 self.logger.info("use proxy %s to send request"%self.proxy)
-                print "use proxy %s to send request"%self.proxy
                 request.meta["proxy"] = self.proxy
                 #request.meta["dont_redirect"] = True  # 有些代理会把请求重定向到一个莫名其妙的地址
                 spider.change_proxy = False
@@ -85,33 +80,26 @@ class HttpProxyMiddleware(object):
         """
         if spider.name == "amazon":
             if "proxy" in request.meta.keys():
-                self.logger.debug("The proxy is %s, the response is %s, the url is %s. " % (request.meta["proxy"], response.status, request.url))
-                print "The proxy is %s, the response is %s, the url is %s. " % (request.meta["proxy"], response.status, request.url)
-
+                self.logger.info("The proxy is %s, the response is %s, the url is %s. " % (request.meta["proxy"], response.status, request.url))
             else:
-                self.logger.debug("Proxy is None, the response is %s, the url is %s," % (response.status, request.url))
-                print("Proxy is None, the response is %s, the url is %s," % (response.status, request.url))
-
+                self.logger.info("Proxy is None, the response is %s, the url is %s," % (response.status, request.url))
             # status不是正常的200而且不在spider声明的正常爬取过程中可能出现的
             # status列表中, 则认为代理无效, 切换代理
             if response.status != 200 \
                and (not hasattr(spider, "website_possible_httpstatus_list") \
                 or response.status not in spider.website_possible_httpstatus_list):
                     self.logger.info("response status not in spider.website_possible_httpstatus_list")
-                    print("response status not in spider.website_possible_httpstatus_list")
                     return self.yield_new_request(request, spider)
             elif response.status == 200:
                 robot_checks = response.xpath('//title[@dir="ltr"]/text()').extract()
                 if len(robot_checks) > 0:
                     self.logger.info("BANNED by amazon.com: %s" % request.url)
-                    print "BANNED by amazon.com: %s" % request.url
                     return self.yield_new_request(request, spider)
             elif response.url[11:17] != "amazon":
                 self.logger.info("redirect to wrong url: %s" % response.url)
-                print "redirect to wrong url: %s" % response.url
                 return self.yield_new_request(request, spider)
             self.proxy_count += 1
-            self.logger.debug("Proxy %s have crawled %s task. "%(self.proxy, self.proxy_count))
+            self.logger.info("Proxy %s have crawled %s task. "%(self.proxy, self.proxy_count))
         return response
 
     def process_exception(self, request, exception, spider):
@@ -125,8 +113,7 @@ class HttpProxyMiddleware(object):
             retry_times = self.settings.get("PROCESSING_EXCEPTION_RETRY_TIMES", 20)
             if times >= retry_times:
                 return
-            self.logger.debug("%s %s: %s" % (request.meta.get("proxy", "local"), type(exception), exception))
-            print "%s %s: %s" % (request.meta.get("proxy", "local"), type(exception), exception)
+            self.logger.info("%s %s: %s" % (request.meta.get("proxy", "local"), type(exception), exception))
             # 只有当proxy_index>fixed_proxy-1时才进行比较, 这样能保证至少本地直连是存在的.
             new_request = request.copy()
             new_request.meta["exception_retry_times"] += 1

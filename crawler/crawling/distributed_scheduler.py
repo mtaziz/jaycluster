@@ -21,7 +21,7 @@ from scutils.redis_queue import RedisPriorityQueue
 # add by msc
 from random_redis_throttled_queue import  RandomRedisThrottledQueue as RedisThrottledQueue
 #from scutils.redis_throttled_queue import RedisThrottledQueue
-from scutils.log_factory import LogFactory
+from custom_log_factory import CustomLogFactory
 from utils import get_method, next_request_method_wrapper, get_raspberrypi_ip_address, RedisDict
 
 try:
@@ -315,7 +315,7 @@ class DistributedScheduler(object):
         my_file = "%s_%s.log"%(spidername, get_raspberrypi_ip_address())
         my_backups = settings.get('SC_LOG_BACKUPS', 5)
 
-        logger = LogFactory.get_instance(json=my_json,
+        logger = CustomLogFactory.get_instance(json=my_json,
                                          name=my_name,
                                          stdout=my_output,
                                          level=my_level,

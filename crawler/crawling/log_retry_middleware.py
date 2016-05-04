@@ -4,7 +4,6 @@ import redis
 import socket
 import time
 from utils import get_raspberrypi_ip_address
-from scrapy.utils.response import response_status_message
 
 from scrapy.xlib.tx import ResponseFailed
 from twisted.internet import defer
@@ -13,7 +12,7 @@ from twisted.internet.error import TimeoutError, DNSLookupError, \
         ConnectionLost, TCPTimedOutError
 
 from scutils.stats_collector import StatsCollector
-from scutils.log_factory import LogFactory
+from custom_log_factory import CustomLogFactory
 
 class LogRetryMiddleware(object):
 
@@ -41,7 +40,7 @@ class LogRetryMiddleware(object):
         my_file = "%s_%s.log" % (settings['SPIDER_NAME'], get_raspberrypi_ip_address())
         my_backups = settings.get('SC_LOG_BACKUPS', 5)
 
-        self.logger = LogFactory.get_instance(json=my_json,
+        self.logger = CustomLogFactory.get_instance(json=my_json,
                                          name=my_name,
                                          stdout=my_output,
                                          level=my_level,

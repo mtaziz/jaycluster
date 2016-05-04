@@ -3,7 +3,6 @@
 # Define your item pipelines here
 
 import json
-import re
 import sys
 import traceback
 import base64
@@ -11,8 +10,8 @@ import base64
 from kafka import KafkaClient, SimpleProducer
 from kafka.common import KafkaUnavailableError
 
-from crawling.items import RawResponseItem
-from crawling.utils import dump_response_body, get_raspberrypi_ip_address
+from items import RawResponseItem
+from utils import get_raspberrypi_ip_address
 from scutils.log_factory import LogFactory
 import time
 
