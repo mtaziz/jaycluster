@@ -91,24 +91,19 @@ class MyStatsCollector(MemoryStatsCollector):
         self.redis_conn.hincrby("crawlid:%s" % crawlid, "total_pages", num)
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
 
-        msg={}
-        msg["spiderid"] = spiderid
-        msg["crawlid"] = crawlid
-        msg["total_pages"] = int(self.redis_conn.hget(crawlid,"total_pages") or 0)
-        self.crawler.spider._logger.info(msg)
+        msgvalue = {"spiderid":spiderid,"crawlid":crawlid,"total_pages":int(self.redis_conn.hget(crawlid, "total_pages") or 0)}
+        msg = "NewCrawl_Total_Pages"
+        self.crawler.spider._logger.info(msg,msgvalue)
         print msg
 
     def set_total_pages(self, crawlid, spiderid, appid, num=1):
         self.redis_conn.hset("crawlid:%s" % crawlid, "total_pages", num)
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
 
-        msgdict = {}
-        msgdict["msg"]["spiderid"] = spiderid
-        msgdict["msg"]["crawlid"] = crawlid
-        msgdict["msg"]["total_pages"] = int(self.redis_conn.hget(crawlid, "total_pages") or 0)
-
-        self.crawler.spider._logger.info(msgdict)
-        print msgdict
+        msgvalue = {"spiderid":spiderid,"crawlid":crawlid,"total_pages":(int(self.redis_conn.hget(crawlid, "total_pages") or 0))}
+        msg = "Update_Total_Pages"
+        self.crawler.spider._logger.info(msg,msgvalue)
+        print msgvalue
 
 
     def inc_crawled_pages(self, crawlid, spiderid, appid):
@@ -117,10 +112,12 @@ class MyStatsCollector(MemoryStatsCollector):
         self.inc_crawled_pages_one_worker(crawlid=crawlid, workerid=self.crawler.spider.worker_id)
 
         #msgvalue= {"spiderid":spiderid,"crawlid":crawlid,"workerid":self.crawler.spider.worker_id,"workerid_status":self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id)}
-        msgvalue= {"spiderid":spiderid,"crawlid":crawlid,"workerid":self.crawler.spider.worker_id}
-        msgvalue.update(self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id))
+        #msgvalue= {"spiderid":spiderid,"crawlid":crawlid,"workerid":self.crawler.spider.worker_id}
+        msgvalue= {"spiderid":spiderid,"crawlid":crawlid}
+        msgvalue.update(self.redis_conn.hgetall("crawlid:%s" % crawlid))
+        #msgvalue.update(self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id))
         msgdict = {"CrawMsg":msgvalue}
-        msg = "WORKER_CRAWLED_MESSAGE"
+        msg = "CRAWLED_MESSAGE"
 
         self.crawler.spider._logger.info(msg,msgdict)
         # self.crawler.spider._logger.info("WORKER_CRAWLED_MESSAGE: {crawlid:%s,workerid:%s, %s }" % (
@@ -130,6 +127,11 @@ class MyStatsCollector(MemoryStatsCollector):
 
     def inc_crawled_pages_one_worker(self, crawlid, workerid):
         self.redis_conn.hincrby("crawlid:%s:workerid:%s" % (crawlid, workerid), "crawled_pages", 1)
+        msgvalue = self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id)
+        msg = "Worker_crwal_message"
+        self.crawler.spider._logger.info(msg, msgvalue)
+
+
 
     def inc_yield_pages(self, crawlid, spiderid, appid):
         self.redis_conn.hincrby("crawlid:%s" % crawlid, "yield_pages", 1)
@@ -145,19 +147,27 @@ class MyStatsCollector(MemoryStatsCollector):
         self._set_spiderid_and_appid(crawlid, spiderid, appid)
         self.inc_banned_pages_one_worker(crawlid=crawlid, workerid=self.crawler.spider.worker_id)
 
+
         #msgvalue= {"spiderid":spiderid,"crawlid":crawlid,"workerid":self.crawler.spider.worker_id,"workerid_status":self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id)}
-        msgvalue= {"spiderid":spiderid,"crawlid":crawlid,"workerid":self.crawler.spider.worker_id}
-        msgvalue.update(self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id))
-        msgdict = {"BanMes":msgvalue}
-        msg = "WORKER_BANNED_MESSAGE"
-        self.crawler.spider._logger.info(msg,msgdict)
+        #msgvalue= {"spiderid":spiderid,"crawlid":crawlid,"workerid":self.crawler.spider.worker_id}
+        msgvalue= {"spiderid":spiderid,"crawlid":crawlid}
+        msgvalue.update(self.redis_conn.hgetall("crawlid:%s" % crawlid))
+        msg = "BANNED_MESSAGE"
+        self.crawler.spider._logger.info(msg,msgvalue)
 
 
     def inc_banned_pages_one_worker(self, crawlid, workerid):
         self.redis_conn.hincrby("crawlid:%s:workerid:%s" % (crawlid, workerid), "banned_pages", 1)
+        msgvalue = self.get_all_status_value_one_worker(crawlid, self.crawler.spider.worker_id)
+        msg = "Worker_bannd_message"
+        self.crawler.spider._logger.info(msg, msgvalue)
 
     def get_all_status_value(self, crawlid):
-        return self.redis_conn.hgetall("crawlid:%s" % crawlid)
+        #return self.redis_conn.hgetall("crawlid:%s" % crawlid)
+        valuedict = self.redis_conn.hgetall("crawlid:%s" % crawlid)
+        for key in valuedict:
+            valuedict[key] = int(valuedict.get(key, 0))
+        return valuedict
 
     def get_all_status_value_one_worker(self, crawlid, workerid):
         valuedict = self.redis_conn.hgetall("crawlid:%s:workerid:%s" % (crawlid, workerid))

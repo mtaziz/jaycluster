@@ -106,6 +106,7 @@ class AmazonSpider(JayClusterSpider):
         sel = Selector(response)
         item = AmazonItem()
         self._enrich_base_data(item, response, is_update=False)
+        
         node_id_re = re.compile(r'node=(?P<node_id>\w+)')
         # breadcrum
         node_id_hrefs = sel.xpath('//div[@id="wayfinding-breadcrumbs_feature_div"]//a/@href').extract()
