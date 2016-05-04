@@ -3,17 +3,7 @@
 from bs4 import BeautifulSoup
 import urllib2
 import logging
-
-logger = logging.getLogger(__name__)
 import sys
-
-root_logger = logging.getLogger("")
-stream_handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter('%(name)-8s %(asctime)s %(levelname)-8s %(message)s', '%a, %d %b %Y %H:%M:%S', )
-stream_handler.setFormatter(formatter)
-root_logger.addHandler(stream_handler)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 def get_html(url):
     request = urllib2.Request(url)
@@ -206,7 +196,14 @@ def fetch_all(endpage=2, log=None):
     return valid_proxyes
 
 if __name__ == '__main__':
+    logger = logging.getLogger(__name__)
+    root_logger = logging.getLogger("")
+    stream_handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter('%(name)-8s %(asctime)s %(levelname)-8s %(message)s', '%a, %d %b %Y %H:%M:%S', )
+    stream_handler.setFormatter(formatter)
+    root_logger.addHandler(stream_handler)
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
     proxyes = fetch_all(log=logger)
-    #print check("202.29.238.242:3128")
     for p in proxyes:
         print p

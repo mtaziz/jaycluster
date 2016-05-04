@@ -24,7 +24,6 @@ class CustomRedirectMiddleware(RedirectMiddleware):
             # new_request.meta["dont_redirect"] = True  # 有些代理会把请求重定向到一个莫名其妙的地址
             new_request.dont_filter = True
             spider.logger.info("in _redirect re-yield response.request: %s" % request.url)
-            print "in _redirect re-yield response.request: %s" % request.url
             return new_request
 
         if ttl and redirects <= self.max_redirect_times:
@@ -45,7 +44,6 @@ class CustomRedirectMiddleware(RedirectMiddleware):
                                                      appid=request.meta['appid'])
             spider._logger.info(
                 " in redicrect request error to failed pages url:%s, exception:%s, meta:%s" % (request.url, reason, request.meta))
-            print "in redicrect request error to failed pages url:%s, exception:%s, meta:%s" % (request.url, reason, request.meta)
             self.stats.set_failed_download_value(request.meta, reason)
             raise IgnoreRequest("max redirections reached")
 

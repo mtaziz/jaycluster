@@ -93,7 +93,7 @@ class DistributedScheduler(object):
         # wrapper next_request
         self.next_request = next_request_method_wrapper(self)(self.next_request)
         # add test by msc
-        self.banned_pages = 0
+        #self.banned_pages = 0
 
     def setup_zookeeper(self):
         self.assign_path = settings.get('ZOOKEEPER_ASSIGN_PATH', "")
@@ -342,8 +342,8 @@ class DistributedScheduler(object):
                                         self.spider.name + ':dupefilter',
                                         self.rfp_timeout)
         # add by msc
-        if self.spider.name == "amazon":
-            self.count_per_minute = RedisDict(self.redis_conn, None, "%s_%s:count_per_minute"%(self.spider.name, self.spider.worker_id))
+        # if self.spider.name == "amazon":
+        #     self.count_per_minute = RedisDict(self.redis_conn, None, "%s_%s:count_per_minute"%(self.spider.name, self.spider.worker_id))
 
     def close(self, reason):
         self.logger.info("Closing Spider", {'spiderid':self.spider.name})
@@ -399,9 +399,10 @@ class DistributedScheduler(object):
                     self.redis_conn.zadd(key, pickle.dumps(req_dict, protocol=-1),
                                         -req_dict['meta']['priority'])
 
-                self.logger.debug("Crawlid: '{id}' Appid: '{appid}' added to queue"
+                self.logger.debug("Crawlid: '{id}' Appid: '{appid}' Url: '{url}' added to queue"
                     .format(appid=req_dict['meta']['appid'],
-                            id=req_dict['meta']['crawlid']))
+                            id=req_dict['meta']['crawlid'],
+                            url=req_dict['meta']['url']))
             else:
                 self.logger.debug("Crawlid: '{id}' Appid: '{appid}' expired"
                                   .format(appid=req_dict['meta']['appid'],
@@ -475,48 +476,12 @@ class DistributedScheduler(object):
             self.update_time = t
             self.create_queues()
 
-        # update the ip address every so often
-
-        # if t - self.update_ip_time > self.ip_update_interval:
-        #     self.update_ip_time = t
-        #     print('befor    self.update_ipaddress()')
-        #     self.update_ipaddress()
-        #     print('after    self.update_ipaddress()')
-        #     self.report_self()
-        #     print('after   self.report_self()')
-         # add test by msc
-        if settings.get("SLEEP_ON", True) and self.spider.name == "amazon":
-            banned_key = "banned:key:%s"%self.spider.worker_id
-            now = time.time()
-            self.redis_conn.zremrangebyscore(banned_key, '-inf', now-self.window)
-            keys = self.redis_conn.keys("crawlid:*:workerid:%s" % self.spider.worker_id)
-            new_banned_pages = 0
-            for key in keys:
-                new_banned_pages += int(self.redis_conn.hget(key, "banned_pages") or 0)
-            if self.banned_pages == 0:
-                self.banned_pages = new_banned_pages
-            if new_banned_pages >  self.banned_pages:
-                diff = new_banned_pages - self.banned_pages
-                self.banned_pages = new_banned_pages
-                a = {}
-                for i in range(diff):
-                    a.update({str(now+i/10.0):str(now+i/10.0)})
-                self.redis_conn.zadd(banned_key, **a)
-            banned_per_minute = self.redis_conn.zcard(banned_key)
-            key = datetime.datetime.now().strftime("%Y%m%d%H%M")
-            self.count_per_minute[key] = banned_per_minute
-            self.logger.debug("banned_per_minute: %s. "%banned_per_minute)
-            if banned_per_minute > int(self.hits * settings.get("SLEEP_STANDARD", 0.95)):
-                self.logger.debug("%s sleep %s minutes"%(self.spider.worker_id, settings.get("SLEEP_MINUTES", 20)))
-                time.sleep((settings.get("SLEEP_MINUTES", 20)+1)*60)
-
         item = self.find_item()
 
-        print('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
-        #self.logger.info('distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % item)
-
         if item:
-
+            self.logger.info(
+                'distributed_scheduler.py::DistributedScheduler::next_request call find_item() result is : %s' % (
+                item["meta"]["url"] if 'meta' in item else item["url"]))
             self.logger.debug("Found url to crawl {url}" \
                     .format(url=item['url']))
             try:

@@ -45,3 +45,26 @@ class CustomLogObject(LogObject):
             self._write_message(message, extras)
             print message
 
+    def debug(self, message, extra={}):
+        '''
+        Writes an error message to the log
+
+        @param message: The message to write
+        @param extra: The extras object to pass in
+        '''
+        if self.level_dict['DEBUG'] >= self.level_dict[self.log_level]:
+            extras = self.add_extras(extra, "DEBUG")
+            self._write_message(message, extras)
+            print message
+
+    def error(self, message, extra={}):
+        '''
+        Writes an error message to the log
+
+        @param message: The message to write
+        @param extra: The extras object to pass in
+        '''
+        if self.level_dict['ERROR'] >= self.level_dict[self.log_level]:
+            extras = self.add_extras(extra, "ERROR")
+            self._write_message(message, extras)
+            print message

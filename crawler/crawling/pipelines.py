@@ -141,14 +141,12 @@ class KafkaPipeline(object):
             except:
                 e = traceback.format_exception(*sys.exc_info())
                 self.logger.error("error heppen in kafka_pipline: %s"%e)
-                print ("error heppen in kafka_pipline: %s"%e)
                 message = json.dumps({"error":e})
 
             firehose_topic = "{prefix}.crawled_firehose".format(prefix=prefix)
             self.checkTopic(firehose_topic)
             self.producer.send_messages(firehose_topic, message)
             self.logger.debug('send data to kafka topic:%s'%firehose_topic)
-            print('send data to kafka topic:', firehose_topic)
 
             if self.appid_topics:
                 appid_topic = "{prefix}.crawled_{appid}".format(
@@ -209,24 +207,10 @@ class LoggingAfterPipeline(object):
         if isinstance(item, RawResponseItem):
             # make duplicate item, but remove unneeded keys
             item_copy = dict(item)
-            # del item_copy['body']
-            # del item_copy['links']
-            # del item_copy['response_headers']
-            # del item_copy['request_headers']
-            # del item_copy['status_code']
-            # del item_copy['status_msg']
-            # item_copy['action'] = 'ack'
-            # item_copy['logger'] = self.logger.name()
-            # item_copy['spiderid'] = spider.name
-
             if item['success']:
-                self.logger.info('Sent page to Kafka', extra=item_copy)
-                print('Sent page to Kafka', item_copy)
+                self.logger.info('Sent page to Kafka')
             else:
                 self.logger.error('Failed to send page to Kafka',
                                   extra=item_copy)
-
-                print('Failed to send page to Kafka', item_copy)
-
             return item
 

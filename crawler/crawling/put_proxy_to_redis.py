@@ -8,8 +8,9 @@ from fetch_free_proxyes import fetch_all
 class ProxyRedisRepository:
     proxy_key = "proxy:addr:port"
 
-    def __init__(self, host, port=6379, key=None):
+    def __init__(self, host, port=6379, key=None, logger=None):
         self.redis_conn = Redis(host, port)
+        self.logger = logger
         if key:
             self.proxy_key = key
 
@@ -32,8 +33,7 @@ class ProxyRedisRepository:
         return self.redis_conn.zcard(self.proxy_key)
 
     def updateProxyAddr(self):
-        #lst = ["12222:22", "3434:33"]
-        self.pushall(dict(zip(fetch_all(), self._yield())))
+        self.pushall(dict(zip(fetch_all(log=self.logger), self._yield())))
 
     def _yield(self):
         while True:

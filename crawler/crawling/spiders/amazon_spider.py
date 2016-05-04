@@ -67,14 +67,13 @@ def get_the_largest_one_from_images(images):
 class AmazonSpider(JayClusterSpider):
 
     name = "amazon"
-    website_possible_httpstatus_list = [404, 301, 302, 303, 307, 500, 502, 503, 504, 400, 408]
     def __init__(self, *args, **kwargs):
         super(AmazonSpider, self).__init__(*args, **kwargs)
         self.change_proxy = None
 
     @parse_method_wrapper
     def parse(self, response):
-        self._logger.info("start response in parse -> response type:%s"%type(response))
+        self._logger.info("start response in parse -> response type:%s"%type(response).__name__)
         item_urls = [
             urljoin(response.url, x) for x in list(set(
                 response.xpath('//div[@id="resultsCol"]//div[@class="a-row a-spacing-none"]/a[@class="a-link-normal a-text-normal"]/@href').extract()
@@ -85,6 +84,10 @@ class AmazonSpider(JayClusterSpider):
             yield Request(url=item_url,
                           callback=self.parse_item,
                           meta=response.meta)
+        workers = response.meta.get('workers', {})
+        for worker in workers.keys():
+            workers[worker] = 0
+        if "if_next_page" in response.meta: del response.meta["if_next_page"]
         next_page_urls = [
             urljoin(response.url, x) for x in list(set(
                 response.xpath('//div[@id="pagn"]//span[@class="pagnRA"]/a/@href').extract()
@@ -216,7 +219,7 @@ class AmazonSpider(JayClusterSpider):
             shipping_cost_string_saleprice = ''.join(sel.xpath('//*[@id="saleprice_shippingmessage"]/span/text()').extract()).strip()
             shipping_cost_string = shipping_cost_string_ourprice or shipping_cost_string_saleprice
             item['shipping_cost'] = extract_shipping_cost_price_from_shipping_cost_string(shipping_cost_string)
-            self._logger.info("Spiderid: %s Crawlid: %s yield item in parse: %s" % (response.meta['spiderid'],response.meta['crawlid'],item))
+            self._logger.info("Spiderid: %s Crawlid: %s yield item in parse, asin: %s" % (response.meta['spiderid'],response.meta['crawlid'],item.get("asin", "unknow")))
 
             self.crawler.stats.inc_crawled_pages(
                 crawlid=response.meta['crawlid'],
@@ -240,10 +243,10 @@ class AmazonSpider(JayClusterSpider):
                 callback=self.parse_shipping_cost,
                 dont_filter=response.request.dont_filter
             )
-            self._logger.info("Spiderid: %s Crawlid: %s yield request in parse: %s" % (response.meta['spiderid'],response.meta['crawlid'],req))
+            self._logger.info("Spiderid: %s Crawlid: %s yield request in parse, asin: %s" % (response.meta['spiderid'],response.meta['crawlid'],req.meta.get("asin", "unknow")))
             return req
         else:
-            self._logger.info("yield item in parse: %s" % item)
+            self._logger.info("yield item in parse, asin: %s" % item.get("asin", "unknow"))
             self.crawler.stats.inc_crawled_pages(
                 crawlid=response.meta['crawlid'],
                 spiderid=response.meta['spiderid'],
@@ -255,7 +258,7 @@ class AmazonSpider(JayClusterSpider):
         item = response.meta['item_half']
         shipping_cost_string = ''.join(response.xpath('//*[@id="olpTabContent"]//p[@class="olpShippingInfo"]//span[@class="a-color-secondary"]//text()').extract()).strip()
         item['shipping_cost'] = extract_shipping_cost_price_from_shipping_cost_string(shipping_cost_string)
-        self._logger.info("Spiderid: %s Crawlid: %s yield item in parse_shipping_cost: %s" % (response.meta['spiderid'],response.meta['crawlid'],item))
+        self._logger.info("Spiderid: %s Crawlid: %s yield item in parse_shipping_cost, asin: %s" % (response.meta['spiderid'],response.meta['crawlid'],item.get("asin", "unknow")))
 
         self.crawler.stats.inc_crawled_pages(
                 crawlid=response.meta['crawlid'],

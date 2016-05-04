@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-
+from scrapy.exceptions import IgnoreRequest
 from put_proxy_to_redis import ProxyRedisRepository
 from twisted.web._newclient import ResponseNeverReceived, ResponseFailed, _WrapperException
 from twisted.internet.error import TimeoutError, ConnectionRefusedError, ConnectError, TCPTimedOutError
@@ -17,6 +17,7 @@ class HttpProxyMiddleware(object):
         self.rep = ProxyRedisRepository(settings.get("REDIS_HOST"))
         self.proxy = "local"
         self.proxy_count = 0
+        self.proxy_useful = 0
         self.start_use_proxy_time = None
 
     @classmethod
@@ -39,15 +40,19 @@ class HttpProxyMiddleware(object):
                                              file=my_file,
                                              bytes=my_bytes,
                                              backups=my_backups)
+        cls.crawler = crawler
         return cls(crawler.settings)
 
     def yield_new_request(self, request, spider):
-        spider.change_proxy = True
-        new_request = request.copy()
-        #new_request.meta["dont_redirect"] = True  # 有些代理会把请求重定向到一个莫名其妙的地址
-        new_request.dont_filter = True
-        self.logger.info("re-yield response.request: %s" % request.url)
-        return new_request
+        if self.proxy_useful < 1:
+            spider.change_proxy = True
+            new_request = request.copy()
+            new_request.dont_filter = True
+            self.logger.info("re-yield response.request: %s" % request.url)
+            return new_request
+        else:
+            self.proxy_useful /= 2
+
 
     def process_request(self, request, spider):
         """
@@ -66,6 +71,7 @@ class HttpProxyMiddleware(object):
                         self.proxy = "local"
                 self.logger.info("change to %s. " % self.proxy)
                 self.proxy_count = 0
+                self.proxy_useful = 0
             if self.proxy != "local":
                 self.logger.info("use proxy %s to send request"%self.proxy)
                 request.meta["proxy"] = self.proxy
@@ -89,16 +95,33 @@ class HttpProxyMiddleware(object):
                and (not hasattr(spider, "website_possible_httpstatus_list") \
                 or response.status not in spider.website_possible_httpstatus_list):
                     self.logger.info("response status not in spider.website_possible_httpstatus_list")
-                    return self.yield_new_request(request, spider)
+                    return self.yield_new_request(request, spider) or response
             elif response.status == 200:
                 robot_checks = response.xpath('//title[@dir="ltr"]/text()').extract()
                 if len(robot_checks) > 0:
-                    self.logger.info("BANNED by amazon.com: %s" % request.url)
-                    return self.yield_new_request(request, spider)
+                    self.logger.info("BANNED by %s: %s" % (request.meta.get("proxy", "local"), request.url))
+                    if request.meta.setdefault('workers', {}).setdefault(spider.worker_id,
+                                                                          0) >= self.settings.get(
+                            "BANNED_RETRY_TIMES", 3):
+                        self.crawler.stats.inc_drop_pages(
+                            crawlid=request.meta['crawlid'],
+                            spiderid=request.meta['spiderid'],
+                            appid=request.meta['appid'],
+                            url=request.url,
+                            worker_id=spider.worker_id,
+                            page_type="None"
+                        )
+
+                        self.logger.info("drop request url: %s" % request.url)
+                        raise IgnoreRequest("max bans reached")
+                    else:
+                        request.meta.get('workers')[spider.worker_id] += 1
+                        return self.yield_new_request(request, spider) or response
             elif response.url[11:17] != "amazon":
                 self.logger.info("redirect to wrong url: %s" % response.url)
                 return self.yield_new_request(request, spider)
             self.proxy_count += 1
+            self.proxy_useful += 1
             self.logger.info("Proxy %s have crawled %s task. "%(self.proxy, self.proxy_count))
         return response
 
@@ -107,20 +130,5 @@ class HttpProxyMiddleware(object):
         处理由于使用代理导致的连接异常
         """
         if spider.name == "amazon":
-            ex_class = "%s.%s" % (exception.__class__.__module__, exception.__class__.__name__)
-            spider.crawler.stats.inc_value('downloader/exception_count', spider=spider)
-            times = request.meta.get("exception_retry_times", 20)
-            retry_times = self.settings.get("PROCESSING_EXCEPTION_RETRY_TIMES", 20)
-            if times >= retry_times:
-                return
             self.logger.info("%s %s: %s" % (request.meta.get("proxy", "local"), type(exception), exception))
-            # 只有当proxy_index>fixed_proxy-1时才进行比较, 这样能保证至少本地直连是存在的.
-            new_request = request.copy()
-            new_request.meta["exception_retry_times"] += 1
-            new_request.meta['priority'] = new_request.meta['priority'] - 10
-            if isinstance(exception, self.DONT_RETRY_ERRORS) and self.proxy_count == 0:
-                spider.change_proxy = True
-            else:
-                self.proxy_count = 0
-            new_request.dont_filter = True
-            return new_request
+            return self.yield_new_request(request, spider)
