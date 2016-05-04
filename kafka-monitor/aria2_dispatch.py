@@ -161,7 +161,12 @@ class Aria2Dispatcher:
                     time.sleep(1)
                     continue
                 val = message.message.value
-                item = json.loads(val)
+                try:
+                    item = json.loads(val)
+                except:
+                    print("error heppened in loads val: %s"%val)
+                    logger.error("error heppened in loads val: %s"%val)
+                    item = {"error":val}
                 i += 1
                 self._process_item(item, i % len(self.aria2_clients))
             except:
