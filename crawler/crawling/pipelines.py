@@ -12,11 +12,43 @@ from kafka.common import KafkaUnavailableError
 
 from items import RawResponseItem
 from utils import get_raspberrypi_ip_address
-from scutils.log_factory import LogFactory
+from custom_log_factory import CustomLogFactory
 import time
 
+class BasePipeline(object):
 
-class LoggingBeforePipeline(object):
+    @classmethod
+    def setup_logger(cls, settings, spidername):
+
+        my_level = settings.get('SC_LOG_LEVEL', 'DEBUG')
+        my_name = "%s_%s" % (spidername, get_raspberrypi_ip_address())
+        my_output = settings.get('SC_LOG_STDOUT', False)
+        my_json = settings.get('SC_LOG_JSON', True)
+        my_dir = settings.get('SC_LOG_DIR', 'logs')
+        my_bytes = settings.get('SC_LOG_MAX_BYTES', '10MB')
+        my_file = "%s_%s.log" % (spidername, get_raspberrypi_ip_address())
+        my_backups = settings.get('SC_LOG_BACKUPS', 5)
+
+        logger = CustomLogFactory.get_instance(json=my_json,
+                                         name=my_name,
+                                         stdout=my_output,
+                                         level=my_level,
+                                         dir=my_dir,
+                                         file=my_file,
+                                         bytes=my_bytes,
+                                         backups=my_backups)
+        return logger
+    @classmethod
+    def from_settings(cls, settings, spidername):
+        logger = cls.setup_logger(settings, spidername)
+        return cls(logger)
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls.from_settings(crawler.settings, crawler.spidercls.name)
+
+
+class LoggingBeforePipeline(BasePipeline):
 
     '''
     Logs the crawl, currently the 1st priority of the pipeline
@@ -26,44 +58,12 @@ class LoggingBeforePipeline(object):
         self.logger = logger
         self.logger.debug("Setup before pipeline")
 
-    @classmethod
-    def from_settings(cls, settings):
-        my_level = settings.get('SC_LOG_LEVEL', 'INFO')
-        my_name = settings.get('SC_LOGGER_NAME', 'sc-logger')
-        my_output = settings.get('SC_LOG_STDOUT', True)
-        my_json = settings.get('SC_LOG_JSON', False)
-        my_dir = settings.get('SC_LOG_DIR', 'logs')
-        my_bytes = settings.get('SC_LOG_MAX_BYTES', '10MB')
-        my_file = settings.get('SC_LOG_FILE', 'main.log')
-        my_backups = settings.get('SC_LOG_BACKUPS', 5)
-
-        logger = LogFactory.get_instance(json=my_json,
-                                         name=my_name,
-                                         stdout=my_output,
-                                         level=my_level,
-                                         dir=my_dir,
-                                         file=my_file,
-                                         bytes=my_bytes,
-                                         backups=my_backups)
-
-        return cls(logger)
-
-    @classmethod
-    def from_crawler(cls, crawler):
-        return cls.from_settings(crawler.settings)
 
     def process_item(self, item, spider):
         self.logger.debug("Processing item in LoggingBeforePipeline")
         if isinstance(item, RawResponseItem):
             # make duplicate item, but remove unneeded keys
             item_copy = dict(item)
-            # del item_copy['body']
-            # del item_copy['links']
-            # del item_copy['response_headers']
-            # del item_copy['request_headers']
-            # item_copy['logger'] = self.logger.name()
-            # item_copy['action'] = 'emit'
-            # item_copy['spiderid'] = spider.name
             self.logger.info('Scraped page', extra=item_copy)
             return item
         elif isinstance(item):
@@ -72,7 +72,7 @@ class LoggingBeforePipeline(object):
             return None
 
 
-class KafkaPipeline(object):
+class KafkaPipeline(BasePipeline):
     '''
     Pushes a serialized item to appropriate Kafka topics.
     '''
@@ -91,23 +91,7 @@ class KafkaPipeline(object):
     @classmethod
     def from_settings(cls, settings, spidername):
         my_appids = settings.get('KAFKA_APPID_TOPICS', False)
-        my_level = settings.get('SC_LOG_LEVEL', 'DEBUG')
-        my_name = "%s_%s" % (spidername, get_raspberrypi_ip_address())
-        my_output = settings.get('SC_LOG_STDOUT', False)
-        my_json = settings.get('SC_LOG_JSON', True)
-        my_dir = settings.get('SC_LOG_DIR', 'logs')
-        my_bytes = settings.get('SC_LOG_MAX_BYTES', '10MB')
-        my_file = "%s_%s.log" % (spidername, get_raspberrypi_ip_address())
-        my_backups = settings.get('SC_LOG_BACKUPS', 5)
-
-        logger = LogFactory.get_instance(json=my_json,
-                                         name=my_name,
-                                         stdout=my_output,
-                                         level=my_level,
-                                         dir=my_dir,
-                                         file=my_file,
-                                         bytes=my_bytes,
-                                         backups=my_backups)
+        logger = cls.setup_logger(settings, spidername)
 
         try:
             kafka = KafkaClient(settings['KAFKA_HOSTS'])
@@ -123,9 +107,6 @@ class KafkaPipeline(object):
         return cls(producer, topic_prefix, kafka, logger, appids=my_appids,
                    use_base64=use_base64)
 
-    @classmethod
-    def from_crawler(cls, crawler):
-        return cls.from_settings(crawler.settings, crawler.spidercls.name)
 
     def process_item(self, item, spider):
         try:
@@ -166,7 +147,7 @@ class KafkaPipeline(object):
             self.kafka.ensure_topic_exists(topicName)
             self.topic_list.append(topicName)
 
-class LoggingAfterPipeline(object):
+class LoggingAfterPipeline(BasePipeline):
 
     '''
     Logs the crawl for successfully pushing to Kafka
@@ -176,31 +157,6 @@ class LoggingAfterPipeline(object):
         self.logger = logger
         self.logger.debug("Setup after pipeline")
 
-    @classmethod
-    def from_settings(cls, settings):
-        my_level = settings.get('SC_LOG_LEVEL', 'INFO')
-        my_name = settings.get('SC_LOGGER_NAME', 'sc-logger')
-        my_output = settings.get('SC_LOG_STDOUT', True)
-        my_json = settings.get('SC_LOG_JSON', False)
-        my_dir = settings.get('SC_LOG_DIR', 'logs')
-        my_bytes = settings.get('SC_LOG_MAX_BYTES', '10MB')
-        my_file = settings.get('SC_LOG_FILE', 'main.log')
-        my_backups = settings.get('SC_LOG_BACKUPS', 5)
-
-        logger = LogFactory.get_instance(json=my_json,
-                                         name=my_name,
-                                         stdout=my_output,
-                                         level=my_level,
-                                         dir=my_dir,
-                                         file=my_file,
-                                         bytes=my_bytes,
-                                         backups=my_backups)
-
-        return cls(logger)
-
-    @classmethod
-    def from_crawler(cls, crawler):
-        return cls.from_settings(crawler.settings)
 
     def process_item(self, item, spider):
         self.logger.debug("Processing item in LoggingAfterPipeline")
@@ -208,9 +164,8 @@ class LoggingAfterPipeline(object):
             # make duplicate item, but remove unneeded keys
             item_copy = dict(item)
             if item['success']:
-                self.logger.info('Sent page to Kafka', extra=item_copy)
+                self.logger.info('Sent page to Kafka, item:%s'%item_copy)
             else:
-                self.logger.error('Failed to send page to Kafka',
-                                  extra=item_copy)
+                self.logger.error('Failed to send page to Kafka, item:%s'%item_copy)
             return item
 
