@@ -82,8 +82,7 @@ class LogRetryMiddleware(object):
         try:
             extras = {}
             extras['logger'] = self.logger.name
-            extras['error_request'] = request
-            extras['error_reason'] = exception
+            extras['error_reason'] = exception.__class__.__name__
             extras['retry_count'] = request.meta.get('retry_times', 0)
             extras['status_code'] = 504
             extras['appid'] = request.meta['appid']

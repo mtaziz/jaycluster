@@ -33,11 +33,11 @@ class RedisRetryMiddleware(RetryMiddleware):
             retryreq.dont_filter = True
             # our priority setup is different from super
             retryreq.meta['priority'] = retryreq.meta['priority'] - 10
-            spider.logger.info("in _retry re-yield response.request: %s" % request.url)
+            spider.logger.info("in _retry retries times: %s, re-yield response.request: %s" % (retries, request.url))
             return retryreq
         else:
             request.meta["url"] = request.url
-            if request.meta.get("if_next_page"):
+            if request.meta.get("callback") == "parse":
                 spider.crawler.stats.inc_total_pages(crawlid=request.meta['crawlid'],
                                                    spiderid=request.meta['spiderid'],
                                                    appid=request.meta['appid'])

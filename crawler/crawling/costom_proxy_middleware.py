@@ -103,13 +103,20 @@ class HttpProxyMiddleware(object):
                     if request.meta.setdefault('workers', {}).setdefault(spider.worker_id,
                                                                           0) >= self.settings.get(
                             "BANNED_RETRY_TIMES", 3):
+                        if request.meta.get("callback") == "parse":
+                            spider.crawler.stats.inc_total_pages(crawlid=request.meta['crawlid'],
+                                                                 spiderid=request.meta['spiderid'],
+                                                                 appid=request.meta['appid'])
+                            page_type = "if_next_page" if request.meta.get("if_next_page") else "index_page"
+                        else:
+                            page_type = "update_page" if request.meta.get("callback") == "parse_item_update" else "get_page"
                         self.crawler.stats.inc_drop_pages(
                             crawlid=request.meta['crawlid'],
                             spiderid=request.meta['spiderid'],
                             appid=request.meta['appid'],
                             url=request.url,
                             worker_id=spider.worker_id,
-                            page_type="None"
+                            page_type=page_type
                         )
 
                         self.logger.info("drop request url: %s" % request.url)
@@ -131,4 +138,7 @@ class HttpProxyMiddleware(object):
         """
         if spider.name == "amazon":
             self.logger.info("%s %s: %s" % (request.meta.get("proxy", "local"), type(exception), exception))
-            return self.yield_new_request(request, spider)
+            if request.url[11:17] == "amazon":
+                return self.yield_new_request(request, spider)
+            else:
+                raise IgnoreRequest("wrong domain")

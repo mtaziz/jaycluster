@@ -68,3 +68,16 @@ class CustomLogObject(LogObject):
             extras = self.add_extras(extra, "ERROR")
             self._write_message(message, extras)
             print message
+
+    def add_extras(self, dict, level):
+        '''
+        Adds the log level to the dict object
+        '''
+        my_copy = dict
+        if 'level' not in my_copy:
+            my_copy['level'] = level
+        if 'timestamp' not in my_copy:
+            my_copy['timestamp'] = self._get_time()
+        if 'logger' not in my_copy:
+            my_copy['logger'] = self.name()
+        return my_copy

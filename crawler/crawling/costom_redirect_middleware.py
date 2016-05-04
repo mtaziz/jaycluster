@@ -17,13 +17,12 @@ class CustomRedirectMiddleware(RedirectMiddleware):
         reason = response_status_message(reason)
         ttl = request.meta.setdefault('redirect_ttl', self.max_redirect_times)
         redirects = request.meta.get('redirect_times', 0) + 1
-        if spider.name == "amazon" and redirected.url[11:17] != "amazon":
+        if spider.name == "amazon" and redirected.url[11:17] != "amazon" and redirects <= self.max_redirect_times:
             spider.logger.info("redirect to wrong url: %s" % redirected.url)
-            print "redirect to wrong url: %s" % redirected.url
             new_request = request.copy()
-            # new_request.meta["dont_redirect"] = True  # 有些代理会把请求重定向到一个莫名其妙的地址
             new_request.dont_filter = True
-            spider.logger.info("in _redirect re-yield response.request: %s" % request.url)
+            new_request.meta["redirect_times"] = redirects
+            spider.logger.info("in _redirect redirect_times: %s re-yield response.request: %s" % (redirects, request.url))
             return new_request
 
         if ttl and redirects <= self.max_redirect_times:
@@ -33,12 +32,12 @@ class CustomRedirectMiddleware(RedirectMiddleware):
                                                [request.url]
             redirected.dont_filter = request.dont_filter
             redirected.priority = request.priority + self.priority_adjust
-            self.logger.debug("Redirecting %s to %s from %s"%(reason, redirected.url, request.url))
+            self.logger.debug("Redirecting %s to %s from %s for %s times "%(reason, redirected.url, request.url, redirected.meta.get("redirect_times")))
             return redirected
         else:
             self.logger.debug("Discarding %s: max redirections reached"%request.url)
             request.meta["url"] = request.url
-            if request.meta.get("if_next_page"):
+            if request.meta.get("callback") == "parse":
                 spider.crawler.stats.inc_total_pages(crawlid=request.meta['crawlid'],
                                                      spiderid=request.meta['spiderid'],
                                                      appid=request.meta['appid'])
