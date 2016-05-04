@@ -85,9 +85,14 @@ class RandomUserAgentMiddleware(UserAgentMiddleware):
     @classmethod
     def from_crawler(cls, crawler):
         obj = cls(crawler.settings)
+        obj.crawler = crawler
         crawler.signals.connect(obj.spider_opened,
                                 signal=signals.spider_opened)
         return obj
+
+    @property
+    def logger(self):
+        return self.crawler.spider._logger
 
     # add by msc
     def choice(self):

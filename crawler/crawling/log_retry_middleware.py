@@ -1,9 +1,9 @@
-import logging
+import sys
+import traceback
 import redis
 import socket
 import time
 from utils import get_raspberrypi_ip_address
-from scrapy.utils.response import response_status_message
 
 from scrapy.xlib.tx import ResponseFailed
 from twisted.internet import defer
@@ -12,7 +12,7 @@ from twisted.internet.error import TimeoutError, DNSLookupError, \
         ConnectionLost, TCPTimedOutError
 
 from scutils.stats_collector import StatsCollector
-from scutils.log_factory import LogFactory
+from custom_log_factory import CustomLogFactory
 
 class LogRetryMiddleware(object):
 
@@ -40,7 +40,7 @@ class LogRetryMiddleware(object):
         my_file = "%s_%s.log" % (settings['SPIDER_NAME'], get_raspberrypi_ip_address())
         my_backups = settings.get('SC_LOG_BACKUPS', 5)
 
-        self.logger = LogFactory.get_instance(json=my_json,
+        self.logger = CustomLogFactory.get_instance(json=my_json,
                                          name=my_name,
                                          stdout=my_output,
                                          level=my_level,
@@ -79,17 +79,20 @@ class LogRetryMiddleware(object):
             self._increment_504_stat(request)
 
     def _log_retry(self, request, exception, spider):
-        extras = {}
-        extras['logger'] = self.logger.name
-        extras['error_request'] = request
-        extras['error_reason'] = exception
-        extras['retry_count'] = request.meta.get('retry_times', 0)
-        extras['status_code'] = 504
-        extras['appid'] = request.meta['appid']
-        extras['crawlid'] = request.meta['crawlid']
-        extras['url'] = request.url
+        try:
+            extras = {}
+            extras['logger'] = self.logger.name
+            extras['error_request'] = request
+            extras['error_reason'] = exception
+            extras['retry_count'] = request.meta.get('retry_times', 0)
+            extras['status_code'] = 504
+            extras['appid'] = request.meta['appid']
+            extras['crawlid'] = request.meta['crawlid']
+            extras['url'] = request.url
 
-        self.logger.error('Scraper Retry', extra=extras)
+            self.logger.error('Scraper Retry', extra=extras)
+        except:
+            self.logger.error(traceback.format_exception(*sys.exc_info()))
 
     def _setup_stats_status_codes(self):
         '''

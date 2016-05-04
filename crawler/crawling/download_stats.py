@@ -1,6 +1,5 @@
 from scrapy.downloadermiddlewares.stats import DownloaderStats
 from scrapy.utils.response import response_httprepr
-from scrapy.utils.response import response_status_message
 from scrapy.conf import settings
 
 class CostomDownloaderStats(DownloaderStats):
@@ -32,11 +31,7 @@ class CostomDownloaderStats(DownloaderStats):
                 self.stats.inc_total_pages(crawlid=request.meta['crawlid'],
                                                    spiderid=request.meta['spiderid'],
                                                    appid=request.meta['appid'])
+            spider._logger.info("in stats request error to failed pages url:%s, exception:%s, meta:%s"%(request.url, exception, request.meta))
+            print "in stats  request error to failed pages url:%s, exception:%s, meta:%s"%(request.url, exception, request.meta)
             self.stats.set_failed_download_value(request.meta, ex_class)
             self.stats.inc_value('downloader/exception_type_count/%s' % ex_class, spider=spider)
-        else:
-            retryreq = request.copy()
-            retryreq.dont_filter = True
-            retryreq.meta["exception_retry_times"] += 1
-            retryreq.meta['priority'] = retryreq.meta['priority'] - 10
-            return retryreq

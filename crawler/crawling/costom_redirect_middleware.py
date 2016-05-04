@@ -1,19 +1,30 @@
 # -*- coding:utf-8 -*-
-import logging
 from scrapy.downloadermiddlewares.redirect import RedirectMiddleware
 from scrapy.utils.response import response_status_message
 from scrapy.exceptions import IgnoreRequest
-logger = logging.getLogger(__name__)
 
 class CustomRedirectMiddleware(RedirectMiddleware):
     def __init__(self, crawler):
         super(CustomRedirectMiddleware, self).__init__(crawler.settings)
         self.stats = crawler.stats
+        self.crawler = crawler
+
+    @property
+    def logger(self):
+        return self.crawler.spider._logger
 
     def _redirect(self, redirected, request, spider, reason):
         reason = response_status_message(reason)
         ttl = request.meta.setdefault('redirect_ttl', self.max_redirect_times)
         redirects = request.meta.get('redirect_times', 0) + 1
+        if spider.name == "amazon" and redirected.url[11:17] != "amazon":
+            spider.logger.info("redirect to wrong url: %s" % redirected.url)
+            print "redirect to wrong url: %s" % redirected.url
+            new_request = request.copy()
+            # new_request.meta["dont_redirect"] = True  # 有些代理会把请求重定向到一个莫名其妙的地址
+            new_request.dont_filter = True
+            spider.logger.info("in _redirect re-yield response.request: %s" % request.url)
+            return new_request
 
         if ttl and redirects <= self.max_redirect_times:
             redirected.meta['redirect_times'] = redirects
@@ -22,18 +33,17 @@ class CustomRedirectMiddleware(RedirectMiddleware):
                                                [request.url]
             redirected.dont_filter = request.dont_filter
             redirected.priority = request.priority + self.priority_adjust
-            logger.debug("Redirecting (%(reason)s) to %(redirected)s from %(request)s",
-                         {'reason': reason, 'redirected': redirected, 'request': request},
-                         extra={'spider': spider})
+            self.logger.debug("Redirecting %s to %s from %s"%(reason, redirected.url, request.url))
             return redirected
         else:
-            logger.debug("Discarding %(request)s: max redirections reached",
-                         {'request': request}, extra={'spider': spider})
+            self.logger.debug("Discarding %s: max redirections reached"%request.url)
             request.meta["url"] = request.url
             if request.meta.get("if_next_page"):
                 spider.crawler.stats.inc_total_pages(crawlid=request.meta['crawlid'],
                                                      spiderid=request.meta['spiderid'],
                                                      appid=request.meta['appid'])
+            spider._logger.info(
+                " in redicrect request error to failed pages url:%s, exception:%s, meta:%s" % (request.url, reason, request.meta))
             self.stats.set_failed_download_value(request.meta, reason)
             raise IgnoreRequest("max redirections reached")
 

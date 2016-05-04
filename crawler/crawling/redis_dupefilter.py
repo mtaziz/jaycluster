@@ -1,5 +1,4 @@
 from scrapy.dupefilters import BaseDupeFilter
-from scrapy.utils.request import request_fingerprint
 
 
 class RFPDupeFilter(BaseDupeFilter):

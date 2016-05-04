@@ -3,7 +3,6 @@
 # Define your item pipelines here
 
 import json
-import re
 import sys
 import traceback
 import base64
@@ -11,8 +10,8 @@ import base64
 from kafka import KafkaClient, SimpleProducer
 from kafka.common import KafkaUnavailableError
 
-from crawling.items import RawResponseItem
-from crawling.utils import dump_response_body
+from items import RawResponseItem
+from utils import get_raspberrypi_ip_address
 from scutils.log_factory import LogFactory
 import time
 
@@ -90,16 +89,16 @@ class KafkaPipeline(object):
         self.use_base64 = use_base64
 
     @classmethod
-    def from_settings(cls, settings):
-        my_level = settings.get('SC_LOG_LEVEL', 'INFO')
-        my_name = settings.get('SC_LOGGER_NAME', 'sc-logger')
-        my_output = settings.get('SC_LOG_STDOUT', True)
-        my_json = settings.get('SC_LOG_JSON', False)
+    def from_settings(cls, settings, spidername):
+        my_appids = settings.get('KAFKA_APPID_TOPICS', False)
+        my_level = settings.get('SC_LOG_LEVEL', 'DEBUG')
+        my_name = "%s_%s" % (spidername, get_raspberrypi_ip_address())
+        my_output = settings.get('SC_LOG_STDOUT', False)
+        my_json = settings.get('SC_LOG_JSON', True)
         my_dir = settings.get('SC_LOG_DIR', 'logs')
         my_bytes = settings.get('SC_LOG_MAX_BYTES', '10MB')
-        my_file = settings.get('SC_LOG_FILE', 'main.log')
+        my_file = "%s_%s.log" % (spidername, get_raspberrypi_ip_address())
         my_backups = settings.get('SC_LOG_BACKUPS', 5)
-        my_appids = settings.get('KAFKA_APPID_TOPICS', False)
 
         logger = LogFactory.get_instance(json=my_json,
                                          name=my_name,
@@ -126,7 +125,7 @@ class KafkaPipeline(object):
 
     @classmethod
     def from_crawler(cls, crawler):
-        return cls.from_settings(crawler.settings)
+        return cls.from_settings(crawler.settings, crawler.spidercls.name)
 
     def process_item(self, item, spider):
         try:
@@ -140,13 +139,14 @@ class KafkaPipeline(object):
                     datum['body'] = base64.b64encode(datum['body'])
                 message = json.dumps(datum)
             except:
-                message = 'json failed to parse'
+                e = traceback.format_exception(*sys.exc_info())
+                self.logger.error("error heppen in kafka_pipline: %s"%e)
+                message = json.dumps({"error":e})
 
             firehose_topic = "{prefix}.crawled_firehose".format(prefix=prefix)
             self.checkTopic(firehose_topic)
             self.producer.send_messages(firehose_topic, message)
-
-            print('send data to kafka topic:', firehose_topic)
+            self.logger.debug('send data to kafka topic:%s'%firehose_topic)
 
             if self.appid_topics:
                 appid_topic = "{prefix}.crawled_{appid}".format(
@@ -207,24 +207,10 @@ class LoggingAfterPipeline(object):
         if isinstance(item, RawResponseItem):
             # make duplicate item, but remove unneeded keys
             item_copy = dict(item)
-            # del item_copy['body']
-            # del item_copy['links']
-            # del item_copy['response_headers']
-            # del item_copy['request_headers']
-            # del item_copy['status_code']
-            # del item_copy['status_msg']
-            # item_copy['action'] = 'ack'
-            # item_copy['logger'] = self.logger.name()
-            # item_copy['spiderid'] = spider.name
-
             if item['success']:
-                self.logger.info('Sent page to Kafka', extra=item_copy)
-                print('Sent page to Kafka', item_copy)
+                self.logger.info('Sent page to Kafka')
             else:
                 self.logger.error('Failed to send page to Kafka',
                                   extra=item_copy)
-
-                print('Failed to send page to Kafka', item_copy)
-
             return item
 
