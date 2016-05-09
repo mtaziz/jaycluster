@@ -1,18 +1,14 @@
-import re
-import pickle
-from kafka_base_monitor import KafkaBaseMonitor
 
-class StatsMonitor(KafkaBaseMonitor):
+class JayStatsMonitor():
 
-    regex = "statsrequest:*:*"
-
-    def setup(self, settings):
+    def setup(self,logger,redis_conn):
         '''
         Setup kafka
         '''
-        KafkaBaseMonitor.setup(self, settings)
+        self.logger = logger
+        self.redis_conn = redis_conn
 
-    def handle(self, key, value):
+    def handle(self):
         '''
         Processes a vaild stats request
 
@@ -20,49 +16,22 @@ class StatsMonitor(KafkaBaseMonitor):
         @param value: The value associated with the key
         '''
         # break down key
-        elements = key.split(":")
-
-        stats = elements[1]
-        appid = elements[2]
-        uuid = value
-
-        # log we received the stats request
-        extras = self.get_log_dict('stats', appid, uuid=uuid)
-        self.logger.info('Received {s} stats request'.format(s=stats),
-            extra=extras)
 
         extras = {}
-        if stats == 'all':
-            extras = self.get_all_stats()
-        elif stats == 'kafka-monitor':
-            extras = self.get_kafka_monitor_stats()
-        elif stats == 'redis-monitor':
-            extras = self.get_redis_monitor_stats()
-        elif stats == 'crawler':
-            extras = self.get_crawler_stats()
-        elif stats == 'spider':
-            extras = self.get_spider_stats()
-        elif stats == 'machine':
-            extras = self.get_machine_stats()
-        else:
-            self.logger.warn('Received invalid stats request: {s}'\
-                .format(s=stats),
-            extra=extras)
-            return
 
-        extras['stats'] = stats
-        extras['appid'] = appid
-        extras['uuid'] = uuid
-        extras['server_time'] = int(self.get_current_time())
+        jay_stats_func = {
+            'kafka-monitor-stats': self.get_kafka_monitor_stats,
+            'redis-monitor-stats': self.get_redis_monitor_stats,
+            'crawler-stats': self.get_crawler_stats,
+            'spider-stats': self.get_spider_stats,
+            'machine-stats': self.get_machine_stats
 
-        self.logger.info(stats, extra=extras)
+        }
 
-        if self._send_to_kafka(extras):
-            extras['success'] = True
-            self.logger.info('Sent stats to kafka', extra=extras)
-        else:
-            extras['success'] = False
-            self.logger.error('Failed to send stats to kafka', extra=extras)
+        for key, func in jay_stats_func.items():
+            dict = func()
+            self.logger.info(key, extra=dict)
+
 
     def get_all_stats(self):
         '''
@@ -76,6 +45,7 @@ class StatsMonitor(KafkaBaseMonitor):
 
         return the_dict
 
+
     def get_kafka_monitor_stats(self):
         '''
         Gather Kafka Monitor stats
@@ -85,6 +55,7 @@ class StatsMonitor(KafkaBaseMonitor):
         self.logger.debug("Gathering kafka-monitor stats")
         return self._get_plugin_stats('kafka-monitor')
 
+
     def get_redis_monitor_stats(self):
         '''
         Gather Redis Monitor stats
@@ -93,6 +64,7 @@ class StatsMonitor(KafkaBaseMonitor):
         '''
         self.logger.debug("Gathering redis-monitor stats")
         return self._get_plugin_stats('redis-monitor')
+
 
     def _get_plugin_stats(self, name):
         '''
@@ -126,6 +98,7 @@ class StatsMonitor(KafkaBaseMonitor):
 
         return the_dict
 
+
     def _get_key_value(self, key, is_hll=False):
         '''
         Returns the proper key value for the stats
@@ -139,6 +112,7 @@ class StatsMonitor(KafkaBaseMonitor):
         else:
             # get zcard value
             return self.redis_conn.zcard(key)
+
 
     def get_spider_stats(self):
         '''
@@ -176,7 +150,7 @@ class StatsMonitor(KafkaBaseMonitor):
                 spider_set.add(spider)
 
             else:
-                self.logger.warn("Unknown crawler stat key", {"key":key})
+                self.logger.warn("Unknown crawler stat key", {"key": key})
 
         # simple counts
         the_dict['unique_spider_count'] = len(spider_set)
@@ -186,6 +160,7 @@ class StatsMonitor(KafkaBaseMonitor):
         ret_dict['spiders'] = the_dict
 
         return ret_dict
+
 
     def get_machine_stats(self):
         '''
@@ -211,7 +186,7 @@ class StatsMonitor(KafkaBaseMonitor):
 
             if end in the_dict[machine][response]:
                 the_dict[machine][response][end] = the_dict[machine][response][end] + \
-                    self._get_key_value(key, end == 'lifetime')
+                                                   self._get_key_value(key, end == 'lifetime')
             else:
                 the_dict[machine][response][end] = self._get_key_value(key, end == 'lifetime')
 
@@ -222,6 +197,7 @@ class StatsMonitor(KafkaBaseMonitor):
         ret_dict['machines'] = the_dict
 
         return ret_dict
+
 
     def get_crawler_stats(self):
         '''
@@ -236,3 +212,4 @@ class StatsMonitor(KafkaBaseMonitor):
         the_dict['machines'] = self.get_machine_stats()['machines']
 
         return the_dict
+
