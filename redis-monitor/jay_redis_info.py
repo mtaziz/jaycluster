@@ -139,6 +139,7 @@ class JayInfoMonitor():
         master['crawlerid'] = []
         master['crawlercount'] = 0
 
+        crawlerinfo = {}
         # get all domain queues
         match_string = '*:*:queue'
         for key in self.redis_conn.scan_iter(match=match_string):
@@ -153,12 +154,17 @@ class JayInfoMonitor():
                         item = item['meta']
 
                     crawlid = item['crawlid']
-                    if crawlid not in master['crawlerid']:
-                        crawlerinfo = {}
-                        crawlerinfo['crawler'] = {}
-                        crawlerinfo['crawler']["crawlerid"] = crawlid
-                        crawlerinfo['crawler']['total_pending'] = 0
+                    if crawlid not in crawlerinfo.keys():
+                        crawlerinfo[crawlid] = {}
+                        crawlerinfo[crawlid]["crawlid"] = crawlid
+                        crawlerinfo[crawlid]['total_pending'] = 0
                         master['crawlercount'] = master['crawlercount'] + 1
+                        master['crawlerid'].append(crawlid)
+
+                    if crawlid in crawlerinfo.keys():
+                        crawlerinfo[crawlid]['total_pending'] = crawlerinfo[crawlid]['total_pending']  + 1
+
+                    print crawlerinfo[crawlid]
 
 
 
